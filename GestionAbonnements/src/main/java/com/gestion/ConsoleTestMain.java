@@ -516,31 +516,27 @@ public class ConsoleTestMain {
 }*/
 package com.gestion;
 
-import com.gestion.entities.*;
-import com.gestion.interfaces.*;
-import com.gestion.services.*;
-
 import com.gestion.controllers.EvenementDAO;
 import com.gestion.controllers.ProgrammeDAO;
-import com.gestion.entities.Evenement;
-import com.gestion.entities.Programme;
+import com.gestion.entities.*;
+import com.gestion.interfaces.AbonnementService;
+import com.gestion.interfaces.TicketService;
+import com.gestion.services.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Scanner;
 
-class ConsoleTestMain {
+public class ConsoleTestMain {
 
     private static final Scanner sc = new Scanner(System.in);
 
-    // ===== SERVICES METIER =====
-    private static final ParticipationService participationService = new ParticipationServiceImpl();
-    private static final RecommandationService recommandationService = new RecommandationServiceImpl();
-    private static final TicketService ticketService = new TicketServiceImpl();
-    private static final AbonnementService abonnementService = new AbonnementServiceImpl();
-    private static final ProgrammeService programmeRecoService = new ProgrammerecomanderServiceImpl();
+    // ===== SERVICES =====
+    private static final ParticipationServiceImpl participationService = new ParticipationServiceImpl();
+    private static final ProgrammeRecommenderService programmeRecoService = new ProgrammeRecommenderService();
+    private static final TicketServiceImpl ticketService = new TicketServiceImpl();
+    private static final AbonnementServiceImpl abonnementService = new AbonnementServiceImpl();
 
     // ===== DAO JDBC =====
     private static final EvenementDAO eventDAO = new EvenementDAO();
@@ -548,111 +544,179 @@ class ConsoleTestMain {
 
     // ======================= MAIN =======================
     public static void main(String[] args) {
-        while (true) {
-            System.out.println("\n==============================");
-            System.out.println("   MAIN DE TEST - CONSOLE");
-            System.out.println("==============================");
-            System.out.println("1) Evenements (CRUD JDBC)");
-            System.out.println("2) Programmes EVENEMENT (JDBC)");
-            System.out.println("3) Programmes RECOMMANDÉS");
-            System.out.println("4) Participations");
-            System.out.println("5) Recommandations");
-            System.out.println("6) Tickets");
-            System.out.println("7) Abonnements");
-            System.out.println("0) Quitter");
-            System.out.print("Choix : ");
 
-            switch (sc.nextLine()) {
+        while (true) {
+            afficherMenu();
+            System.out.print("👉 Votre choix : ");
+            String choix = sc.nextLine();
+
+            switch (choix) {
                 case "1" -> afficherEvenements();
                 case "2" -> afficherProgrammesEvent();
                 case "3" -> afficherProgrammesRecommandes();
                 case "4" -> testerParticipation();
-                case "5" -> testerRecommandation();
-                case "6" -> testerTicket();
-                case "7" -> testerAbonnement();
+                case "5" -> testerTicket();
+                case "6" -> testerAbonnement();
                 case "0" -> {
-                    System.out.println("👋 Fin du test");
+                    System.out.println("\n👋 Fin du programme. Merci !");
                     return;
                 }
-                default -> System.out.println("❌ Choix invalide");
+                default -> System.out.println("❌ Choix invalide !");
             }
         }
     }
 
+    // ======================= MENU =======================
+    private static void afficherMenu() {
+        System.out.println("\n======================================");
+        System.out.println("     🎯 CONSOLE DE TEST - GESTION");
+        System.out.println("======================================");
+        System.out.println("1️⃣  Afficher les événements");
+        System.out.println("2️⃣  Programmes d’un événement");
+        System.out.println("3️⃣  Programmes recommandés (selon participation)");
+        System.out.println("4️⃣  Tester une participation");
+        System.out.println("5️⃣  Tester un ticket");
+        System.out.println("6️⃣  Tester un abonnement");
+        System.out.println("0️⃣  Quitter");
+        System.out.println("======================================");
+    }
+
     // ======================= EVENEMENTS =======================
     private static void afficherEvenements() {
+        System.out.println("\n📌 LISTE DES ÉVÉNEMENTS");
         try {
             List<Evenement> list = eventDAO.findAll();
-            list.forEach(System.out::println);
+            list.forEach(e -> System.out.println("• " + e));
         } catch (Exception e) {
-            System.out.println("Erreur événements : " + e.getMessage());
+            System.out.println("❌ Erreur événements : " + e.getMessage());
         }
     }
 
-    // ======================= PROGRAMME (JDBC) =======================
-   private static void afficherProgrammesEvent() {
+    // ======================= PROGRAMMES EVENT =======================
+    private static void afficherProgrammesEvent() {
         try {
-            System.out.print("ID événement : ");
+            System.out.print("\nID de l'événement : ");
             int eventId = Integer.parseInt(sc.nextLine());
+
             List<Programme> list = programmeDAO.findByEventId(eventId);
-            list.forEach(System.out::println);
+            System.out.println("\n📅 PROGRAMMES DE L'ÉVÉNEMENT");
+            list.forEach(p -> System.out.println("• " + p));
         } catch (Exception e) {
-            System.out.println("Erreur programme événement : " + e.getMessage());
+            System.out.println("❌ Erreur programme événement : " + e.getMessage());
         }
     }
 
-    // ======================= PROGRAMME RECOMMANDÉ =======================
+    // ======================= PROGRAMMES RECOMMANDÉS =======================
     private static void afficherProgrammesRecommandes() {
         try {
-            ProgrammeRecommender p = new ProgrammeRecommender(
-                    1L,
-                    "Programme suggéré IA",
-                    LocalDateTime.now().plusDays(1),
-                    LocalDateTime.now().plusDays(1).plusHours(2)
-            );
-            programmeRecoService.create(p);
-            programmeRecoService.findAll().forEach(System.out::println);
-        } catch (Exception e) {
-            System.out.println("Erreur programme recommandé : " + e.getMessage());
-        }
-    }
+            System.out.println("\n🎯 PROGRAMMES RECOMMANDÉS");
 
-    // ======================= PARTICIPATION =======================
-    private static void testerParticipation() {
-        try {
-            Participation p = new Participation(
+            Participation participation = new Participation(
                     1L,
                     1L,
                     Participation.TypeParticipation.SIMPLE,
                     Participation.ContexteSocial.AMIS
             );
-            participationService.create(p);
-            participationService.findAll().forEach(System.out::println);
+            participation.setId(1L);
+
+            List<ProgrammeRecommender> programmes =
+                    programmeRecoService.genererProgramme(participation);
+
+            programmes.forEach(p ->
+                    System.out.printf(
+                            "• %s | %s - %s | %s%n  ➜ %s%n",
+                            p.getActivite(),
+                            p.getHeureDebut(),
+                            p.getHeureFin(),
+                            p.getAmbiance(),
+                            p.getJustification()
+                    )
+            );
         } catch (Exception e) {
-            System.out.println("Erreur participation : " + e.getMessage());
+            System.out.println("❌ Erreur programme recommandé : " + e.getMessage());
         }
     }
 
-    // ======================= RECOMMANDATION =======================
-    private static void testerRecommandation() {
+    // ======================= PARTICIPATION =======================
+    /*private static void testerParticipation() {
         try {
-            Recommandation r = new Recommandation(
+            System.out.println("\n👥 TEST PARTICIPATION");
+
+            Participation p = new Participation(
                     1L,
                     1L,
-                    0.92,
-                    "Basé sur l’historique utilisateur",
-                    Recommandation.AlgorithmeReco.HYBRIDE
+                    Participation.TypeParticipation.SIMPLE,
+                    Participation.ContexteSocial.COUPLE
             );
-            recommandationService.create(r);
-            recommandationService.findAll().forEach(System.out::println);
+
+            participationService.create(p);
+            participationService.findAll().forEach(System.out::println);
         } catch (Exception e) {
-            System.out.println("Erreur recommandation : " + e.getMessage());
+            System.out.println("❌ Erreur participation : " + e.getMessage());
+        }
+    }*/
+
+    private static void testerParticipation() {
+        try {
+            System.out.println("\n👥 TEST PARTICIPATION");
+
+            // Choix de l'utilisateur
+            System.out.print("ID Utilisateur : ");
+            Long userId = Long.parseLong(sc.nextLine());
+
+            System.out.print("ID Événement : ");
+            Long evenementId = Long.parseLong(sc.nextLine());
+
+            // Choix du type
+            System.out.println("Type de participation : 1) SIMPLE  2) HEBERGEMENT  3) GROUPE");
+            String typeInput = sc.nextLine();
+            Participation.TypeParticipation type;
+            switch (typeInput) {
+                case "2" -> type = Participation.TypeParticipation.HEBERGEMENT;
+                case "3" -> type = Participation.TypeParticipation.GROUPE;
+                default -> type = Participation.TypeParticipation.SIMPLE;
+            }
+
+            // Nombre de nuits si hébergement
+            int hebergementNuits = 0;
+            if (type == Participation.TypeParticipation.HEBERGEMENT || type == Participation.TypeParticipation.GROUPE) {
+                System.out.print("Nombre de nuits (hébergement) : ");
+                hebergementNuits = Integer.parseInt(sc.nextLine());
+            }
+
+            // Choix du contexte social
+            System.out.println("Contexte social : 1) COUPLE 2) AMIS 3) FAMILLE 4) SOLO 5) PROFESSIONNEL");
+            String contexteInput = sc.nextLine();
+            Participation.ContexteSocial contexte;
+            switch (contexteInput) {
+                case "1" -> contexte = Participation.ContexteSocial.COUPLE;
+                case "2" -> contexte = Participation.ContexteSocial.AMIS;
+                case "3" -> contexte = Participation.ContexteSocial.FAMILLE;
+                case "4" -> contexte = Participation.ContexteSocial.SOLO;
+                case "5" -> contexte = Participation.ContexteSocial.PROFESSIONNEL;
+                default -> contexte = Participation.ContexteSocial.SOLO;
+            }
+
+            // Création de la participation
+            Participation p = new Participation(userId, evenementId, type, contexte);
+            p.setHebergementNuits(hebergementNuits);
+
+            participationService.create(p);
+            System.out.println("✅ Participation créée : " + p);
+
+        } catch (Exception e) {
+            System.out.println("❌ Erreur participation : " + e.getMessage());
         }
     }
+
+
+
 
     // ======================= TICKET =======================
     private static void testerTicket() {
         try {
+            System.out.println("\n🎫 TEST TICKET");
+
             Ticket t = ticketService.creerTicketSelonChoix(
                     1L,
                     1L,
@@ -664,13 +728,15 @@ class ConsoleTestMain {
             );
             System.out.println(t);
         } catch (Exception e) {
-            System.out.println("Erreur ticket : " + e.getMessage());
+            System.out.println("❌ Erreur ticket : " + e.getMessage());
         }
     }
 
     // ======================= ABONNEMENT =======================
     private static void testerAbonnement() {
         try {
+            System.out.println("\n💎 TEST ABONNEMENT");
+
             Abonnement a = new Abonnement(
                     1L,
                     Abonnement.TypeAbonnement.PREMIUM,
@@ -678,11 +744,11 @@ class ConsoleTestMain {
                     new BigDecimal("59.99"),
                     true
             );
+
             abonnementService.create(a);
             abonnementService.findAll().forEach(System.out::println);
         } catch (Exception e) {
-            System.out.println("Erreur abonnement : " + e.getMessage());
+            System.out.println("❌ Erreur abonnement : " + e.getMessage());
         }
     }
 }
-

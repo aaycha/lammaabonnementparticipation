@@ -38,7 +38,7 @@ import java.util.Optional;
 }*/
 
 
-package com.gestion.interfaces;
+/*package com.gestion.interfaces;
 
 import com.gestion.entities.ProgrammeRecommender;
 
@@ -62,5 +62,20 @@ public interface ProgrammeService {
     boolean delete(Long id);
 
     void marquerCommeUtilisee(Long id);
+}*/
+
+
+package com.gestion.interfaces;
+
+import com.gestion.entities.ProgrammeRecommender;
+
+import java.util.List;
+
+public interface ProgrammeService {
+
+    void genererProgrammeSelonParticipation(Long participationId);
+
+    List<ProgrammeRecommender> findByParticipation(Long participationId);
 }
+
 

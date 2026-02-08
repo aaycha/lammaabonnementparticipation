@@ -271,75 +271,88 @@ import java.util.stream.Collectors;
         return programme;
     }
 }*/
-
-
 package com.gestion.services;
 
+import com.gestion.entities.Participation;
 import com.gestion.entities.ProgrammeRecommender;
-import com.gestion.interfaces.ProgrammeService;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
-public class ProgrammerecomanderServiceImpl implements ProgrammeService {
+public class ProgrammeRecommenderService {
 
-    // Simulation DB (remplace JDBC pour simplifier)
-    private final List<ProgrammeRecommender> storage = new ArrayList<>();
-    private final AtomicLong idGen = new AtomicLong(1);
+    public List<ProgrammeRecommender> genererProgramme(Participation participation) {
 
-    @Override
-    public ProgrammeRecommender create(ProgrammeRecommender reco) {
-        reco.setId(idGen.getAndIncrement());
-        storage.add(reco);
-        return reco;
-    }
+        List<ProgrammeRecommender> programmes = new ArrayList<>();
 
-    @Override
-    public Optional<ProgrammeRecommender> findById(Long id) {
-        return storage.stream()
-                .filter(r -> r.getId().equals(id))
-                .findFirst();
-    }
+        switch (participation.getContexteSocial()) {
 
-    @Override
-    public List<ProgrammeRecommender> findAll() {
-        return new ArrayList<>(storage);
-    }
+            case COUPLE -> {
+                programmes.add(new ProgrammeRecommender(
+                        participation.getId(),
+                        "Dîner romantique & vin",
+                        LocalTime.of(19, 0),
+                        LocalTime.of(21, 0),
+                        ProgrammeRecommender.Ambiance.CALME,
+                        "Moment intime recommandé pour les couples"
+                ));
+            }
 
-    @Override
-    public List<ProgrammeRecommender> findByUser(Long userId) {
-        return storage.stream()
-                .filter(r -> r.getUserId().equals(userId))
-                .collect(Collectors.toList());
-    }
+            case AMIS -> {
+                programmes.add(new ProgrammeRecommender(
+                        participation.getId(),
+                        "Barbecue & musique",
+                        LocalTime.of(16, 0),
+                        LocalTime.of(18, 0),
+                        ProgrammeRecommender.Ambiance.FESTIVE,
+                        "Activité conviviale idéale entre amis"
+                ));
 
-    @Override
-    public List<ProgrammeRecommender> topRecommandations(Long userId, int limite) {
-        return storage.stream()
-                .filter(r -> r.getUserId().equals(userId))
-                .filter(ProgrammeRecommender::estValide)
-                .sorted(Comparator.comparingDouble(ProgrammeRecommender::getScore).reversed())
-                .limit(limite)
-                .collect(Collectors.toList());
-    }
+                programmes.add(new ProgrammeRecommender(
+                        participation.getId(),
+                        "Jeux de groupe",
+                        LocalTime.of(18, 30),
+                        LocalTime.of(20, 0),
+                        ProgrammeRecommender.Ambiance.SOCIALE,
+                        "Renforce l'esprit d'équipe"
+                ));
+            }
 
-    @Override
-    public ProgrammeRecommender update(ProgrammeRecommender reco) {
-        delete(reco.getId());
-        storage.add(reco);
-        return reco;
-    }
+            case FAMILLE -> {
+                programmes.add(new ProgrammeRecommender(
+                        participation.getId(),
+                        "Randonnée légère",
+                        LocalTime.of(9, 0),
+                        LocalTime.of(11, 0),
+                        ProgrammeRecommender.Ambiance.CALME,
+                        "Activité adaptée à tous les âges"
+                ));
+            }
 
-    @Override
-    public boolean delete(Long id) {
-        return storage.removeIf(r -> r.getId().equals(id));
-    }
+            case SOLO -> {
+                programmes.add(new ProgrammeRecommender(
+                        participation.getId(),
+                        "Moment détente & lecture",
+                        LocalTime.of(15, 0),
+                        LocalTime.of(16, 30),
+                        ProgrammeRecommender.Ambiance.CALME,
+                        "Idéal pour une expérience personnelle"
+                ));
+            }
 
-    @Override
-    public void marquerCommeUtilisee(Long id) {
-        findById(id).ifPresent(r -> r.setUtilise(true));
+            case PROFESSIONNEL -> {
+                programmes.add(new ProgrammeRecommender(
+                        participation.getId(),
+                        "Networking & échange",
+                        LocalTime.of(17, 0),
+                        LocalTime.of(18, 30),
+                        ProgrammeRecommender.Ambiance.SOCIALE,
+                        "Favorise les échanges professionnels"
+                ));
+            }
+        }
+
+        return programmes;
     }
 }
-
-

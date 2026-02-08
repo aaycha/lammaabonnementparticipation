@@ -107,78 +107,58 @@ public class ProgrammeRecommender {
 }*/
 package com.gestion.entities;
 
-import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 public class ProgrammeRecommender {
 
     private Long id;
-    private Long userId;
-    private Long programmeId;
-    private double score;
-    private String raison;
-    private AlgorithmeReco algorithme;
-    private LocalDateTime dateCreation;
-    private boolean utilise;
+    private Long participationId;
 
-    // Enum
-    public enum AlgorithmeReco {
-        CHOIX_UTILISATEUR,
-        COLLABORATIF,
-        CONTENU
+    private String activite;          // Barbecue, Vin, Jeux, Randonnée…
+    private LocalTime heureDebut;
+    private LocalTime heureFin;
+
+    private Ambiance ambiance;        // CALME, FESTIVE, SOCIALE
+    private String justification;     // Pourquoi cette activité
+    private boolean recommande;       // validée ou non
+
+    public enum Ambiance {
+        CALME,
+        FESTIVE,
+        SOCIALE
     }
 
-    // Constructeur vide (OBLIGATOIRE JDBC)
     public ProgrammeRecommender() {}
 
-    // Constructeur principal
-    public ProgrammeRecommender(Long userId,
-                                Long programmeId,
-                                double score,
-                                String raison,
-                                AlgorithmeReco algorithme) {
-        this.userId = userId;
-        this.programmeId = programmeId;
-        this.score = score;
-        this.raison = raison;
-        this.algorithme = algorithme;
-        this.dateCreation = LocalDateTime.now();
-        this.utilise = false;
+    public ProgrammeRecommender(Long participationId,
+                                String activite,
+                                LocalTime heureDebut,
+                                LocalTime heureFin,
+                                Ambiance ambiance,
+                                String justification) {
+
+        this.participationId = participationId;
+        this.activite = activite;
+        this.heureDebut = heureDebut;
+        this.heureFin = heureFin;
+        this.ambiance = ambiance;
+        this.justification = justification;
+        this.recommande = true;
     }
 
-    // Logique métier simple
     public boolean estValide() {
-        return score >= 0.5 && !utilise;
-    }
-
-    public boolean estPrioritaire() {
-        return score >= 0.8;
+        return heureDebut != null && heureFin != null && heureFin.isAfter(heureDebut);
     }
 
     // Getters & Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public Long getUserId() { return userId; }
-    public Long getProgrammeId() { return programmeId; }
-    public double getScore() { return score; }
-    public String getRaison() { return raison; }
-    public AlgorithmeReco getAlgorithme() { return algorithme; }
-    public LocalDateTime getDateCreation() { return dateCreation; }
-    public boolean isUtilise() { return utilise; }
-
-    public void setUtilise(boolean utilise) {
-        this.utilise = utilise;
-    }
-
-    // ✅ TO STRING (OBLIGATOIRE POUR LA CONSOLE)
-    @Override
-    public String toString() {
-        return "ProgrammeRecommande {" +
-                "programmeId=" + programmeId +
-                ", score=" + String.format("%.2f", score) +
-                ", algorithme=" + algorithme +
-                ", prioritaire=" + estPrioritaire() +
-                ", raison='" + raison + '\'' +
-                '}';
-    }
+    public Long getParticipationId() { return participationId; }
+    public String getActivite() { return activite; }
+    public LocalTime getHeureDebut() { return heureDebut; }
+    public LocalTime getHeureFin() { return heureFin; }
+    public Ambiance getAmbiance() { return ambiance; }
+    public String getJustification() { return justification; }
+    public boolean isRecommande() { return recommande; }
 }
