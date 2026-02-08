@@ -822,7 +822,7 @@ public class ConsoleTestMain {
 
 
     // ======================= TICKET =======================
-    private static void testerTicket() {
+    /*private static void testerTicket() {
         try {
             System.out.println("\n🎫 TEST TICKET");
 
@@ -839,7 +839,55 @@ public class ConsoleTestMain {
         } catch (Exception e) {
             System.out.println("❌ Erreur ticket : " + e.getMessage());
         }
+    }*/
+
+
+
+    private static void testerTicket() {
+        try {
+            System.out.println("\n🎫 TEST TICKET");
+
+            // Demande à l'utilisateur de saisir l'ID de la participation
+            System.out.print("Entrez l'ID de la participation : ");
+            Long participationId = sc.nextLong();
+
+            // Demande l'ID utilisateur
+            System.out.print("Entrez votre ID utilisateur : ");
+            Long userId = sc.nextLong();
+            sc.nextLine(); // consommer le retour à la ligne
+
+            // Demande le type de ticket
+            System.out.print("Type de ticket (TICKET/BADGE/PASS) : ");
+            String typeStr = sc.nextLine().trim().toUpperCase();
+            Ticket.TypeTicket type = Ticket.TypeTicket.valueOf(typeStr); // Conversion String → Enum
+
+            // Demande le format du ticket
+            System.out.print("Format du ticket (NUMERIQUE/PHYSIQUE/HYBRIDE) : ");
+            String formatStr = sc.nextLine().trim().toUpperCase();
+            Ticket.FormatTicket format = Ticket.FormatTicket.valueOf(formatStr); // Conversion String → Enum
+
+            // Création du ticket
+            Ticket t = ticketService.creerTicketSelonChoix(
+                    participationId,
+                    userId,
+                    type,
+                    36.8,    // latitude exemple
+                    10.2,    // longitude exemple
+                    "Tunis", // lieu
+                    format
+            );
+
+            System.out.println("\n✅ Ticket généré avec succès :");
+            System.out.println(t);
+
+        } catch (IllegalArgumentException e) {
+            System.out.println("❌ Type ou format invalide !");
+        } catch (Exception e) {
+            System.out.println("❌ Erreur ticket : " + e.getMessage());
+        }
     }
+
+
 
     // ======================= ABONNEMENT =======================
     private static void testerAbonnement() {
