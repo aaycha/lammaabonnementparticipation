@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" 
+            fx:controller="com.gestion.controllers.MainController">
+    
+    <top>
+        <VBox styleClass="header">
+            <HBox spacing="20" alignment="CENTER_LEFT" styleClass="header-content">
+                <ImageView fx:id="logoImageView" fitHeight="50" fitWidth="50" preserveRatio="true"/>
+                <Label text="Gestion des Abonnements et Participations" styleClass="title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="userLabel" text="Utilisateur: Admin" styleClass="user-info"/>
+                <Button text="Déconnexion" onAction="#handleLogout" styleClass="btn-logout"/>
+            </HBox>
+            
+            <!-- Barre de navigation -->
+            <HBox spacing="10" alignment="CENTER" styleClass="nav-bar">
+                <ToggleButton fx:id="abonnementsToggle" text="Abonnements" selected="true" 
+                             onAction="#showAbonnementsView" styleClass="nav-button"/>
+                <ToggleButton fx:id="participationsToggle" text="Participations" 
+                             onAction="#showParticipationsView" styleClass="nav-button"/>
+                <ToggleButton fx:id="recommandationsToggle" text="Recommandations IA" 
+                             onAction="#showRecommandationsView" styleClass="nav-button"/>
+                <ToggleButton fx:id="analyticsToggle" text="Analytics" 
+                             onAction="#showAnalyticsView" styleClass="nav-button"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <TextField fx:id="searchField" promptText="Rechercher..." prefWidth="200" 
+                          styleClass="search-field" onKeyTyped="#handleSearch"/>
+                <Button text="🔍" onAction="#performSearch" styleClass="search-button"/>
+            </HBox>
+        </VBox>
+    </top>
+    
+    <center>
+        <StackPane fx:id="contentStackPane">
+            <!-- Vue des Abonnements -->
+            <VBox fx:id="abonnementsView" spacing="15" visible="true" managed="true" 
+                  styleClass="content-view">
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Button text="➕ Nouvel Abonnement" onAction="#handleNouvelAbonnement" 
+                            styleClass="btn-primary"/>
+                    <Button text="📊 Exporter" onAction="#exporterAbonnements" styleClass="btn-secondary"/>
+                    <Button text="🔄 Actualiser" onAction="#refreshAbonnements" styleClass="btn-secondary"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <ComboBox fx:id="filterStatutCombo" promptText="Filtrer par statut" 
+                              onAction="#filterAbonnements"/>
+                    <ComboBox fx:id="filterTypeCombo" promptText="Filtrer par type" 
+                              onAction="#filterAbonnements"/>
+                </HBox>
+                
+                <!-- Tableau des abonnements -->
+                <TableView fx:id="abonnementsTable" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="idColumn" text="ID" prefWidth="50"/>
+                        <TableColumn fx:id="userIdColumn" text="Utilisateur" prefWidth="100"/>
+                        <TableColumn fx:id="typeColumn" text="Type" prefWidth="100"/>
+                        <TableColumn fx:id="dateDebutColumn" text="Date Début" prefWidth="120"/>
+                        <TableColumn fx:id="dateFinColumn" text="Date Fin" prefWidth="120"/>
+                        <TableColumn fx:id="prixColumn" text="Prix" prefWidth="80"/>
+                        <TableColumn fx:id="statutColumn" text="Statut" prefWidth="100"/>
+                        <TableColumn fx:id="pointsColumn" text="Points" prefWidth="80"/>
+                        <TableColumn fx:id="actionsColumn" text="Actions" prefWidth="150"/>
+                    </columns>
+                </TableView>
+                
+                <!-- Pagination -->
+                <HBox spacing="10" alignment="CENTER">
+                    <Button text="⬅️ Précédent" onAction="#previousPage" styleClass="btn-pagination"/>
+                    <Label fx:id="pageLabel" text="Page 1 sur 1" styleClass="page-info"/>
+                    <Button text="Suivant ➡️" onAction="#nextPage" styleClass="btn-pagination"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label text="Afficher:"/>
+                    <ComboBox fx:id="itemsPerPageCombo" value="10" onAction="#changeItemsPerPage"/>
+                </HBox>
+            </VBox>
+            
+            <!-- Vue des Participations -->
+            <VBox fx:id="participationsView" spacing="15" visible="false" managed="false" 
+                  styleClass="content-view">
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Button text="➕ Nouvelle Participation" onAction="#handleNouvelleParticipation" 
+                            styleClass="btn-primary"/>
+                    <Button text="📊 Exporter" onAction="#exporterParticipations" styleClass="btn-secondary"/>
+                    <Button text="🔄 Actualiser" onAction="#refreshParticipations" styleClass="btn-secondary"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <ComboBox fx:id="filterParticipationStatutCombo" promptText="Filtrer par statut"/>
+                    <ComboBox fx:id="filterContexteCombo" promptText="Filtrer par contexte"/>
+                </HBox>
+                
+                <TableView fx:id="participationsTable" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="participationIdColumn" text="ID" prefWidth="50"/>
+                        <TableColumn fx:id="participationUserIdColumn" text="Utilisateur" prefWidth="100"/>
+                        <TableColumn fx:id="evenementColumn" text="Événement" prefWidth="150"/>
+                        <TableColumn fx:id="participationTypeColumn" text="Type" prefWidth="100"/>
+                        <TableColumn fx:id="contexteColumn" text="Contexte" prefWidth="100"/>
+                        <TableColumn fx:id="dateInscriptionColumn" text="Inscription" prefWidth="150"/>
+                        <TableColumn fx:id="participationStatutColumn" text="Statut" prefWidth="100"/>
+                        <TableColumn fx:id="hebergementColumn" text="Hébergement" prefWidth="100"/>
+                        <TableColumn fx:id="badgeColumn" text="Badge" prefWidth="120"/>
+                        <TableColumn fx:id="participationActionsColumn" text="Actions" prefWidth="150"/>
+                    </columns>
+                </TableView>
+            </VBox>
+            
+            <!-- Vue des Recommandations IA -->
+            <VBox fx:id="recommandationsView" spacing="15" visible="false" managed="false" 
+                  styleClass="content-view">
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Button text="🤖 Générer Recommandations" onAction="#genererRecommandations" 
+                            styleClass="btn-primary"/>
+                    <Button text="🧠 Entraîner Modèle IA" onAction="#entrainerModeleIA" styleClass="btn-secondary"/>
+                    <Button text="📊 Analytics IA" onAction="#showAnalyticsIA" styleClass="btn-secondary"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <ComboBox fx:id="filterAlgorithmeCombo" promptText="Filtrer par algorithme"/>
+                    <Slider fx:id="scoreMinSlider" min="0" max="1" value="0.5" 
+                            showTickLabels="true" showTickMarks="true"/>
+                </HBox>
+                
+                <SplitPane dividerPositions="0.6" VBox.vgrow="ALWAYS">
+                    <!-- Tableau des recommandations -->
+                    <TableView fx:id="recommandationsTable">
+                        <columns>
+                            <TableColumn fx:id="recommandationIdColumn" text="ID" prefWidth="50"/>
+                            <TableColumn fx:id="recommandationUserIdColumn" text="Utilisateur" prefWidth="100"/>
+                            <TableColumn fx:id="evenementSuggereColumn" text="Événement Suggéré" prefWidth="150"/>
+                            <TableColumn fx:id="scoreColumn" text="Score" prefWidth="80"/>
+                            <TableColumn fx:id="algorithmeColumn" text="Algorithme" prefWidth="120"/>
+                            <TableColumn fx:id="raisonColumn" text="Raison IA" prefWidth="200"/>
+                            <TableColumn fx:id="dateGenerationColumn" text="Génération" prefWidth="150"/>
+                            <TableColumn fx:id="recommandationActionsColumn" text="Actions" prefWidth="100"/>
+                        </columns>
+                    </TableView>
+                    
+                    <!-- Détails de la recommandation -->
+                    <VBox spacing="10" styleClass="details-panel">
+                        <Label text="Détails de la Recommandation" styleClass="section-title"/>
+                        <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true">
+                            <VBox spacing="10" fx:id="recommandationDetailsBox">
+                                <Label text="Sélectionnez une recommandation pour voir les détails"/>
+                            </VBox>
+                        </ScrollPane>
+                    </VBox>
+                </SplitPane>
+            </VBox>
+            
+            <!-- Vue Analytics -->
+            <VBox fx:id="analyticsView" spacing="15" visible="false" managed="false" 
+                  styleClass="content-view">
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Button text="📊 Générer Rapport" onAction="#genererRapport" styleClass="btn-primary"/>
+                    <Button text="📈 Actualiser Stats" onAction="#refreshStats" styleClass="btn-secondary"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <DatePicker fx:id="dateDebutPicker" promptText="Date début"/>
+                    <DatePicker fx:id="dateFinPicker" promptText="Date fin"/>
+                </HBox>
+                
+                <TabPane VBox.vgrow="ALWAYS">
+                    <Tab text="📊 Statistiques Générales">
+                        <GridPane hgap="15" vgap="15" padding="20">
+                            <Label text="Total Abonnements:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                            <Label fx:id="totalAbonnementsLabel" text="0" styleClass="stat-value" 
+                                   GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                            
+                            <Label text="Total Participations:" GridPane.rowIndex="0" GridPane.columnIndex="2"/>
+                            <Label fx:id="totalParticipationsLabel" text="0" styleClass="stat-value" 
+                                   GridPane.rowIndex="0" GridPane.columnIndex="3"/>
+                            
+                            <Label text="Revenu Total:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                            <Label fx:id="revenuTotalLabel" text="0 TND" styleClass="stat-value" 
+                                   GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                            
+                            <Label text="Taux Conversion:" GridPane.rowIndex="1" GridPane.columnIndex="2"/>
+                            <Label fx:id="tauxConversionLabel" text="0%" styleClass="stat-value" 
+                                   GridPane.rowIndex="1" GridPane.columnIndex="3"/>
+                        </GridPane>
+                    </Tab>
+                    
+                    <Tab text="🎯 Performance IA">
+                        <VBox spacing="15" padding="20">
+                            <Label text="Performance des Algorithmes de Recommandation" styleClass="section-title"/>
+                            <TableView fx:id="performanceTable">
+                                <columns>
+                                    <TableColumn text="Algorithme" prefWidth="150"/>
+                                    <TableColumn text="Précision" prefWidth="100"/>
+                                    <TableColumn text="Rappel" prefWidth="100"/>
+                                    <TableColumn text="F1-Score" prefWidth="100"/>
+                                    <TableColumn text="Conversions" prefWidth="100"/>
+                                </columns>
+                            </TableView>
+                        </VBox>
+                    </Tab>
+                    
+                    <Tab text="👥 Utilisateurs">
+                        <VBox spacing="15" padding="20">
+                            <Label text="Top Utilisateurs par Points" styleClass="section-title"/>
+                            <TableView fx:id="topUsersTable">
+                                <columns>
+                                    <TableColumn text="Utilisateur" prefWidth="150"/>
+                                    <TableColumn text="Points" prefWidth="100"/>
+                                    <TableColumn text="Abonnements" prefWidth="100"/>
+                                    <TableColumn text="Participations" prefWidth="100"/>
+                                    <TableColumn text="Badge" prefWidth="150"/>
+                                </columns>
+                            </TableView>
+                        </VBox>
+                    </Tab>
+                </TabPane>
+            </VBox>
+        </StackPane>
+    </center>
+    
+    <bottom>
+        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="status-bar">
+            <Label fx:id="statusLabel" text="Prêt" styleClass="status-text"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="connectionStatusLabel" text="🟢 Connecté à la base de données" styleClass="status-connection"/>
+            <ProgressBar fx:id="progressBar" prefWidth="200" visible="false"/>
+        </HBox>
+    </bottom>
+    
+    <padding>
+        <Insets top="10" right="10" bottom="10" left="10"/>
+    </padding>
+</BorderPane>
