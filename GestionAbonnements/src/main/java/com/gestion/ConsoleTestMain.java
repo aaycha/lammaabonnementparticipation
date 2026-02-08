@@ -556,7 +556,52 @@ public class ConsoleTestMain {
                 case "2" -> afficherProgrammesEvent();
                 case "3" -> afficherProgrammesRecommandes();
                 case "4" -> testerParticipation();
-                case "5" -> testerTicket();
+                case "5" -> { // Tester un ticket
+                    System.out.println("\n🎫 TEST TICKET");
+                    try {
+                        Scanner scanner = new Scanner(System.in);
+
+                        System.out.print("Entrez l'ID de la participation : ");
+                        Long participationId = Long.parseLong(scanner.nextLine().trim());
+
+                        System.out.print("Entrez votre ID utilisateur : ");
+                        Long userId = Long.parseLong(scanner.nextLine().trim());
+
+                        System.out.print("Type de ticket (TICKET/BADGE/PASS) : ");
+                        String typeInput = scanner.nextLine().trim().toUpperCase();
+
+                        System.out.print("Format du ticket (NUMERIQUE/PHYSIQUE/HYBRIDE) : ");
+                        String formatInput = scanner.nextLine().trim().toUpperCase();
+
+                        Ticket.TypeTicket type;
+                        Ticket.FormatTicket format;
+
+                        try {
+                            type = Ticket.TypeTicket.valueOf(typeInput);
+                            format = Ticket.FormatTicket.valueOf(formatInput);
+                        } catch (IllegalArgumentException e) {
+                            System.out.println("❌ Type ou format invalide !");
+                            break; // retourne au menu
+                        }
+
+                        TicketService ticketService = new TicketServiceImpl();
+                        Ticket ticket = ticketService.creerTicketSelonChoix(
+                                participationId, userId, type,
+                                null, null, null, // latitude, longitude, lieu optionnels
+                                format
+                        );
+
+                        System.out.println("✅ Ticket créé avec succès ! ID : " + ticket.getId());
+
+                    } catch (NumberFormatException e) {
+                        System.out.println("❌ ID invalide !");
+                    } catch (IllegalArgumentException e) {
+                        System.out.println("❌ Impossible de créer le ticket : " + e.getMessage());
+                    } catch (Exception e) {
+                        System.out.println("❌ Erreur inattendue : " + e.getMessage());
+                    }
+                }
+
                 case "6" -> testerAbonnement();
                 case "0" -> {
                     System.out.println("\n👋 Fin du programme. Merci !");

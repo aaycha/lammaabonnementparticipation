@@ -447,9 +447,6 @@ import java.util.stream.Stream;
 
 }
 */
-
-
-
 package com.gestion.services;
 
 import com.gestion.entities.Ticket;
@@ -493,10 +490,11 @@ public class TicketServiceImpl implements TicketService {
         // Par défaut, statut = VALIDE si null
         if (ticket.getStatut() == null) ticket.setStatut(Ticket.StatutTicket.VALIDE);
         if (ticket.getCodeUnique() == null || ticket.getCodeUnique().trim().isEmpty()) {
-            ticket.setCodeUnique(UUID.randomUUID().toString()); // Génération automatique
+            ticket.setCodeUnique(UUID.randomUUID().toString());
         }
+        if (ticket.getDateCreation() == null) ticket.setDateCreation(LocalDateTime.now());
 
-        String sql = "INSERT INTO tickets (participation_id, user_id, type, code_unique, " +
+        String sql = "INSERT INTO tickets (participationId, user_id, type, code_unique, " +
                 "latitude, longitude, lieu, statut, format, date_creation, date_expiration, qr_code, informations_supplementaires) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
@@ -552,7 +550,7 @@ public class TicketServiceImpl implements TicketService {
     }
 
     private boolean ticketExiste(Long participationId, Long userId) {
-        String sql = "SELECT COUNT(*) FROM tickets WHERE participation_id = ? AND user_id = ?";
+        String sql = "SELECT COUNT(*) FROM tickets WHERE participationId = ? AND user_id = ?";
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setLong(1, participationId);
@@ -569,7 +567,7 @@ public class TicketServiceImpl implements TicketService {
     private Ticket mapResultSetToTicket(ResultSet rs) throws SQLException {
         Ticket ticket = new Ticket();
         ticket.setId(rs.getLong("id"));
-        ticket.setParticipationId(rs.getLong("participation_id"));
+        ticket.setParticipationId(rs.getLong("participationId")); // corrigé
         ticket.setUserId(rs.getLong("user_id"));
         ticket.setType(Ticket.TypeTicket.valueOf(rs.getString("type")));
         ticket.setCodeUnique(rs.getString("code_unique"));
@@ -650,7 +648,7 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public Ticket update(Ticket ticket) {
         if (!validerTicket(ticket)) throw new IllegalArgumentException("Ticket invalide");
-        String sql = "UPDATE tickets SET participation_id = ?, user_id = ?, type = ?, code_unique = ?, " +
+        String sql = "UPDATE tickets SET participationId = ?, user_id = ?, type = ?, code_unique = ?, " +
                 "latitude = ?, longitude = ?, lieu = ?, statut = ?, format = ?, date_creation = ?, date_expiration = ?, " +
                 "qr_code = ?, informations_supplementaires = ? WHERE id = ?";
 
@@ -730,7 +728,7 @@ public class TicketServiceImpl implements TicketService {
         return create(ticket);
     }
 
-    // ----------------- AUTRES RECHERCHES -----------------
+    // ----------------- RECHERCHES AVANCEES -----------------
     @Override
     public List<Ticket> findByParticipationId(Long participationId) {
         return findAll().stream().filter(t -> t.getParticipationId().equals(participationId)).collect(Collectors.toList());
@@ -822,5 +820,6 @@ public class TicketServiceImpl implements TicketService {
                 .collect(Collectors.toList());
     }
 }
+
 
 
