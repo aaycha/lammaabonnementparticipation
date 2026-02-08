@@ -27,16 +27,21 @@ public class TicketServiceImpl implements TicketService {
         this.dbConnection = MyConnection.getInstance();
     }
 
+
     @Override
     public Ticket create(Ticket ticket) {
         if (!validerTicket(ticket)) {
             throw new IllegalArgumentException("Ticket invalide");
         }
 
-        String sql = "INSERT INTO tickets (participation_id, user_id, type, code_unique, " +
-                    "latitude, longitude, lieu, statut, format, date_creation, date_expiration, " +
-                    "qr_code, informations_supplementaires) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        // Vérifier que la participation existe
+        if (!participationExists(ticket.getParticipationId())) {
+            throw new IllegalArgumentException("La participation avec ID " + ticket.getParticipationId() + " n'existe pas !");
+        }
+
+        String sql = "INSERT INTO tickets (id, user_id, type, code_unique, " +
+                "latitude, longitude, lieu, statut, format, date_creation, date_expiration, qr_code, informations_supplementaires) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -51,8 +56,8 @@ public class TicketServiceImpl implements TicketService {
             pstmt.setString(8, ticket.getStatut().name());
             pstmt.setString(9, ticket.getFormat().name());
             pstmt.setTimestamp(10, Timestamp.valueOf(ticket.getDateCreation()));
-            pstmt.setTimestamp(11, ticket.getDateExpiration() != null ? 
-                             Timestamp.valueOf(ticket.getDateExpiration()) : null);
+            pstmt.setTimestamp(11, ticket.getDateExpiration() != null ?
+                    Timestamp.valueOf(ticket.getDateExpiration()) : null);
             pstmt.setString(12, ticket.getQrCode());
             pstmt.setString(13, ticket.getInformationsSupplementaires());
 
@@ -64,17 +69,38 @@ public class TicketServiceImpl implements TicketService {
             try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
                     ticket.setId(generatedKeys.getLong(1));
-                    logger.info("Ticket créé avec succès: ID {}", ticket.getId());
                     return ticket;
                 } else {
                     throw new SQLException("Création de ticket échouée, aucun ID obtenu.");
                 }
             }
         } catch (SQLException e) {
-            logger.error("Erreur lors de la création du ticket: {}", e.getMessage());
             throw new RuntimeException("Impossible de créer le ticket", e);
         }
     }
+
+    // Vérifie que la participation existe
+    private boolean participationExists(Long participationId) {
+        String sql = "SELECT COUNT(*) FROM participations WHERE id = ?";
+        try (Connection conn = dbConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setLong(1, participationId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            logger.error("Erreur vérification participation : {}", e.getMessage());
+        }
+        return false;
+    }
+
+
+
+
+
+
 
     @Override
     public Optional<Ticket> findById(Long id) {
@@ -137,7 +163,7 @@ public class TicketServiceImpl implements TicketService {
             throw new IllegalArgumentException("Ticket invalide");
         }
 
-        String sql = "UPDATE tickets SET participation_id = ?, user_id = ?, type = ?, " +
+        String sql = "UPDATE tickets SET id = ?, user_id = ?, type = ?, " +
                     "code_unique = ?, latitude = ?, longitude = ?, lieu = ?, statut = ?, " +
                     "format = ?, date_creation = ?, date_expiration = ?, qr_code = ?, " +
                     "informations_supplementaires = ? WHERE id = ?";
@@ -415,3 +441,4 @@ public class TicketServiceImpl implements TicketService {
         return R * c;
     }
 }
+

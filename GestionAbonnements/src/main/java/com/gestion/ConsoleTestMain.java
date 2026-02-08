@@ -527,6 +527,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Stream;
 
 public class ConsoleTestMain {
 
@@ -638,36 +639,125 @@ public class ConsoleTestMain {
     }
 
     // ======================= PARTICIPATION =======================
-    /*private static void testerParticipation() {
-        try {
-            System.out.println("\n👥 TEST PARTICIPATION");
-
-            Participation p = new Participation(
-                    1L,
-                    1L,
-                    Participation.TypeParticipation.SIMPLE,
-                    Participation.ContexteSocial.COUPLE
-            );
-
-            participationService.create(p);
-            participationService.findAll().forEach(System.out::println);
-        } catch (Exception e) {
-            System.out.println("❌ Erreur participation : " + e.getMessage());
-        }
-    }*/
 
     private static void testerParticipation() {
         try {
             System.out.println("\n👥 TEST PARTICIPATION");
 
-            // Choix de l'utilisateur
-            System.out.print("ID Utilisateur : ");
-            Long userId = Long.parseLong(sc.nextLine());
+            // --- Nom utilisateur ---
+            System.out.print("Nom de l'utilisateur : ");
+            String nomUser = sc.nextLine().trim();
 
-            System.out.print("ID Événement : ");
-            Long evenementId = Long.parseLong(sc.nextLine());
+            Long userId = participationService.getUserIdByNom(nomUser);
+            if (userId == null) {
+                System.out.println("❌ Utilisateur introuvable !");
+                return;
+            }
 
-            // Choix du type
+            // --- Nom événement ---
+            System.out.print("Nom de l'événement : ");
+            String nomEvent = sc.nextLine().trim();
+
+            Long evenementId = participationService.getEvenementIdByNom(nomEvent);
+            if (evenementId == null) {
+                System.out.println("❌ Événement introuvable !");
+                return;
+            }
+
+            // --- Vérifier si déjà inscrit ---
+            if (participationService.isAlreadyParticipating(userId, evenementId)) {
+                System.out.println("❌ Vous êtes déjà inscrit à cet événement !");
+                return;
+            }
+
+            // --- Choix du type ---
+            System.out.println("Type de participation : 1) SIMPLE  2) HEBERGEMENT  3) GROUPE");
+            String typeInput = sc.nextLine().trim().toUpperCase();
+            Participation.TypeParticipation type;
+            switch (typeInput) {
+                case "2", "HEBERGEMENT" -> type = Participation.TypeParticipation.HEBERGEMENT;
+                case "3", "GROUPE" -> type = Participation.TypeParticipation.GROUPE;
+                default -> type = Participation.TypeParticipation.SIMPLE;
+            }
+
+            // --- Nombre de nuits si HEBERGEMENT ---
+            int hebergementNuits = 0;
+            if (type == Participation.TypeParticipation.HEBERGEMENT) {
+                System.out.print("Nombre de nuits (hébergement) : ");
+                try {
+                    hebergementNuits = Integer.parseInt(sc.nextLine().trim());
+                    if (hebergementNuits <= 0) {
+                        System.out.println("❌ Nombre de nuits invalide !");
+                        return;
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("❌ Entrée invalide !");
+                    return;
+                }
+            }
+
+            // --- Contexte social ---
+            System.out.println("Contexte social : 1) COUPLE 2) AMIS 3) FAMILLE 4) SOLO 5) PROFESSIONNEL");
+            String contexteInput = sc.nextLine().trim();
+            Participation.ContexteSocial contexte = switch (contexteInput) {
+                case "1", "COUPLE" -> Participation.ContexteSocial.COUPLE;
+                case "2", "AMIS" -> Participation.ContexteSocial.AMIS;
+                case "3", "FAMILLE" -> Participation.ContexteSocial.FAMILLE;
+                case "4", "SOLO" -> Participation.ContexteSocial.SOLO;
+                case "5", "PROFESSIONNEL" -> Participation.ContexteSocial.PROFESSIONNEL;
+                default -> Participation.ContexteSocial.SOLO;
+            };
+
+            // --- Création participation ---
+            Participation p = new Participation(userId, evenementId, type, contexte);
+            p.setHebergementNuits(hebergementNuits);
+            p.setStatut(Participation.StatutParticipation.EN_ATTENTE);
+            p.setDateInscription(java.time.LocalDateTime.now());
+
+            Participation created = participationService.create(p);
+
+            // --- Affichage final avec Stream pour style ---
+            System.out.println("✅ Participation créée :");
+            Stream.of(created).forEach(System.out::println);
+
+        } catch (Exception e) {
+            System.out.println("❌ Erreur participation : " + e.getMessage());
+        }
+    }
+
+
+    /*private static void testerParticipation() {
+        try {
+            System.out.println("\n👥 TEST PARTICIPATION");
+
+            // --- Saisie du nom utilisateur et événement ---
+            System.out.print("Nom de l'utilisateur : ");
+            String nomUser = sc.nextLine();
+
+            System.out.print("Nom de l'événement : ");
+            String nomEvenement = sc.nextLine();
+
+            // --- Récupération des IDs depuis les noms ---
+            Long userId = participationService.getUserIdByNom(nomUser);
+            if (userId == null) {
+                System.out.println("❌ Utilisateur introuvable !");
+                return;
+            }
+
+            Long evenementId = participationService.getEvenementIdByNom(nomEvenement);
+            if (evenementId == null) {
+                System.out.println("❌ Événement introuvable !");
+                return;
+            }
+
+            // --- Vérifier si déjà inscrit ---
+            boolean dejaInscrit = participationService.isAlreadyParticipating(userId, evenementId);
+            if (dejaInscrit) {
+                System.out.println("❌ Vous êtes déjà inscrit à cet événement !");
+                return;
+            }
+
+            // --- Choix du type ---
             System.out.println("Type de participation : 1) SIMPLE  2) HEBERGEMENT  3) GROUPE");
             String typeInput = sc.nextLine();
             Participation.TypeParticipation type;
@@ -684,7 +774,25 @@ public class ConsoleTestMain {
                 hebergementNuits = Integer.parseInt(sc.nextLine());
             }
 
-            // Choix du contexte social
+            // --- Nombre de nuits si hébergement ---
+            int nuits = 0;
+            if (type == Participation.TypeParticipation.HEBERGEMENT) {
+                System.out.print("Nombre de nuits (hébergement) : ");
+                try {
+                    nuits = Integer.parseInt(sc.nextLine());
+                    if (nuits <= 0) {
+                        System.out.println("❌ Nombre de nuits invalide !");
+                        return;
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("❌ Entrée invalide !");
+                    return;
+                }
+            }
+
+
+
+            // --- Choix du contexte social ---
             System.out.println("Contexte social : 1) COUPLE 2) AMIS 3) FAMILLE 4) SOLO 5) PROFESSIONNEL");
             String contexteInput = sc.nextLine();
             Participation.ContexteSocial contexte;
@@ -697,7 +805,7 @@ public class ConsoleTestMain {
                 default -> contexte = Participation.ContexteSocial.SOLO;
             }
 
-            // Création de la participation
+            // --- Création de la participation ---
             Participation p = new Participation(userId, evenementId, type, contexte);
             p.setHebergementNuits(hebergementNuits);
 
@@ -708,6 +816,7 @@ public class ConsoleTestMain {
             System.out.println("❌ Erreur participation : " + e.getMessage());
         }
     }
+*/
 
 
 

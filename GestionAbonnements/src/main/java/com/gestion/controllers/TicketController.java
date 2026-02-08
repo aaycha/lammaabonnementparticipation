@@ -74,7 +74,7 @@ public class TicketController {
     /**
      * Crée un ticket selon les coordonnées et choix de l'utilisateur
      */
-    public Ticket creerTicketSelonChoix(Long participationId, Long userId, 
+    /*public Ticket creerTicketSelonChoix(Long participationId, Long userId,
                                        String type, 
                                        Double latitude, Double longitude, 
                                        String lieu, String format) {
@@ -86,7 +86,18 @@ public class TicketController {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Type ou format invalide: " + e.getMessage());
         }
+    }*/
+
+
+    public Ticket creerTicketSelonChoix(Long participationId, Long userId,
+                                        String type, Double latitude, Double longitude,
+                                        String lieu, String format) {
+        Ticket.TypeTicket typeTicket = Ticket.TypeTicket.valueOf(type.toUpperCase());
+        Ticket.FormatTicket formatTicket = Ticket.FormatTicket.valueOf(format.toUpperCase());
+        Ticket ticket = new Ticket(participationId, userId, typeTicket, latitude, longitude, lieu, formatTicket);
+        return ticketService.create(ticket);
     }
+
 
     public List<Ticket> getByCoordonnees(Double latitude, Double longitude, Double rayonKm) {
         return ticketService.findByCoordonnees(latitude, longitude, rayonKm);
