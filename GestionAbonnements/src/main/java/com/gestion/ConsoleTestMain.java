@@ -232,6 +232,9 @@ public class ConsoleTestMain {
             System.out.println("8) Lister participations en attente");
             System.out.println("9) Confirmer une participation");
             System.out.println("10) Annuler une participation");
+            System.out.println("12) Supprimer participation");
+            System.out.println("13) Confirmer une participation");
+            System.out.println("15) Statistiques rapides");
             System.out.println("0) Retour au menu principal");
             System.out.print("Choix : ");
 
@@ -266,6 +269,7 @@ public class ConsoleTestMain {
                     }
                     case 9 -> confirmerParticipation();
                     case 10 -> annulerParticipation();
+                    case 15 -> afficherStats();
                     case 0 -> System.out.println("Retour au menu principal...");
                     default -> System.out.println("Choix invalide ! Veuillez choisir un numéro entre 0 et 10.");
                 }
@@ -273,6 +277,71 @@ public class ConsoleTestMain {
                 System.out.println("❌ Erreur : " + e.getMessage());
             }
         } while (choix != 0);
+    }
+    // Tri personnalisé
+    private static void listerAvecTri() {
+        System.out.print("Trier par (date/type/statut/nuits) [défaut: date] : ");
+        String sortBy = sc.nextLine().trim();
+        System.out.print("Ordre (ASC/DESC) [défaut: DESC] : ");
+        String sortOrder = sc.nextLine().trim();
+
+        List<Participation> result = participationService.findAll(sortBy, sortOrder);
+        if (result.isEmpty()) {
+            System.out.println("Aucune participation trouvée.");
+        } else {
+            result.forEach(System.out::println);
+        }
+    }
+
+    // Recherche avancée (exemple simple)
+    private static void rechercheAvancee() {
+        System.out.print("Statut (EN_ATTENTE/CONFIRME/ANNULE/REFUSE - vide pour tous) : ");
+        String statutStr = sc.nextLine().trim().toUpperCase();
+
+        List<Participation> result;
+        if (!statutStr.isEmpty()) {
+            try {
+                Participation.StatutParticipation statut = Participation.StatutParticipation.valueOf(statutStr);
+                result = participationService.findByStatut(statut);
+            } catch (IllegalArgumentException e) {
+                System.out.println("Statut invalide.");
+                return;
+            }
+        } else {
+            result = participationService.findAll();
+        }
+
+        if (result.isEmpty()) {
+            System.out.println("Aucun résultat.");
+        } else {
+            result.forEach(System.out::println);
+        }
+    }
+
+    // Liste d'attente d'un événement
+    private static void listerListeAttente() {
+        try {
+            System.out.print("ID de l'événement : ");
+            Long eventId = Long.parseLong(sc.nextLine().trim());
+            List<Participation> attente = participationService.findListeAttente(eventId);
+            if (attente.isEmpty()) {
+                System.out.println("Aucune personne en liste d'attente pour cet événement.");
+            } else {
+                System.out.println("Liste d'attente pour l'événement " + eventId + " :");
+                attente.forEach(System.out::println);
+            }
+        } catch (Exception e) {
+            System.out.println("❌ Erreur : " + e.getMessage());
+        }
+    }
+
+    // Statistiques rapides
+    private static void afficherStats() {
+        System.out.println("\n=== Statistiques rapides ===");
+        System.out.println("Total participations     : " + participationService.findAll().size());
+        System.out.println("Confirmées               : " + participationService.findParticipationsConfirmees().size());
+        System.out.println("En attente               : " + participationService.findParticipationsEnAttente().size());
+        System.out.println("Avec hébergement         : " + participationService.findAvecHebergement().size());
     }
 
     // ────────────────────────────────────────────────
@@ -506,6 +575,9 @@ public class ConsoleTestMain {
             System.out.println("❌ Erreur inattendue : " + e.getMessage());
         }
     }
+
+
+
     // ======================= TICKET =======================
     private static void testerTicket() {
         try {
