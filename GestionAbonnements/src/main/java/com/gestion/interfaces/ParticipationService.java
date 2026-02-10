@@ -92,6 +92,8 @@ public interface ParticipationService {
     String exporterCalendrier(Long userId);
     List<Participation> importerDonneesExterne(String source);
     boolean integrerCalendrierExterne(Long userId, String icalData);
+
+    boolean isAlreadyParticipating(Long userId, Long evenementId);
 }
 
 
