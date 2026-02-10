@@ -1163,7 +1163,7 @@ public class AbonnementServiceImpl implements AbonnementService {
         return false;
     }
 
-    @Override
+    /*@Override
     public boolean peutEtreSupprime(Long id) {
         Optional<Abonnement> opt = findById(id);
         if (opt.isEmpty()) {
@@ -1191,6 +1191,57 @@ public class AbonnementServiceImpl implements AbonnementService {
     // ────────────────────────────────────────────────
     // STATS & CALCULS
     // ────────────────────────────────────────────────
+*/
+
+    @Override
+    public boolean peutEtreSupprime(Long id) {
+        System.out.println("→ Vérification suppression pour abonnement ID = " + id);
+
+        Optional<Abonnement> opt = findById(id);
+        if (opt.isEmpty()) {
+            System.out.println("  → Abonnement introuvable → suppression refusée");
+            return false;
+        }
+
+        Abonnement a = opt.get();
+        System.out.println("  → Statut actuel : " + a.getStatut());
+
+        if (a.getStatut() != Abonnement.StatutAbonnement.EXPIRE) {
+            System.out.println("  → Statut n'est PAS EXPIRE → suppression refusée");
+            return false;
+        }
+
+        System.out.println("  → Statut OK (EXPIRE). Vérification participations...");
+
+        String sql = "SELECT COUNT(*) FROM participations WHERE user_id=? AND statut IN ('CONFIRME','EN_ATTENTE')";
+        try (Connection conn = dbConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setLong(1, a.getUserId());
+            System.out.println("  → Exécution requête pour user_id = " + a.getUserId());
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    int count = rs.getInt(1);
+                    System.out.println("  → Nombre de participations actives/en attente : " + count);
+                    if (count > 0) {
+                        System.out.println("  → Participations encore actives → suppression refusée");
+                        return false;
+                    } else {
+                        System.out.println("  → Aucune participation bloquante → suppression AUTORISÉE");
+                        return true;
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("  → ERREUR SQL dans peutEtreSupprime : " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+
+        System.out.println("  → Cas non prévu → suppression refusée par défaut");
+        return false;
+    }
 
     @Override
     public BigDecimal getTotalPointsAccumules() {
