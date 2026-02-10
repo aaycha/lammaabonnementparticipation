@@ -2,6 +2,7 @@ package com.gestion;
 
 import com.gestion.controllers.EvenementDAO;
 import com.gestion.controllers.ProgrammeDAO;
+import com.gestion.criteria.ParticipationCriteria;
 import com.gestion.entities.*;
 import com.gestion.interfaces.AbonnementService;
 import com.gestion.interfaces.TicketService;
@@ -9,12 +10,11 @@ import com.gestion.services.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ConsoleTestMain {
@@ -125,7 +125,7 @@ public class ConsoleTestMain {
     }
 
     // ======================= PARTICIPATION =======================
-    private static void gestionParticipation() {
+    /*private static void gestionParticipation() {
         int choix;
         do {
             System.out.println("\n=== MENU GESTION PARTICIPATION ===");
@@ -215,8 +215,297 @@ public class ConsoleTestMain {
         Long id = Long.parseLong(sc.nextLine());
         if (participationService.delete(id)) System.out.println("✅ Participation supprimée !");
         else System.out.println("❌ Échec suppression !");
+    }*/
+
+    // ======================= PARTICIPATION =======================
+    private static void gestionParticipation() {
+        int choix;
+        do {
+            System.out.println("\n=== MENU GESTION PARTICIPATION ===");
+            System.out.println("1) Créer participation");
+            System.out.println("2) Lister toutes les participations");
+            System.out.println("3) Rechercher par utilisateur");
+            System.out.println("4) Rechercher par événement");
+            System.out.println("5) Mettre à jour participation");
+            System.out.println("6) Supprimer participation");
+            System.out.println("7) Lister participations confirmées");
+            System.out.println("8) Lister participations en attente");
+            System.out.println("9) Confirmer une participation");
+            System.out.println("10) Annuler une participation");
+            System.out.println("0) Retour au menu principal");
+            System.out.print("Choix : ");
+
+            String input = sc.nextLine().trim();
+
+            try {
+                choix = Integer.parseInt(input);
+            } catch (NumberFormatException e) {
+                System.out.println("Choix invalide, veuillez entrer un nombre.");
+                choix = -1; // continue la boucle
+                continue;
+            }
+
+            try {
+                switch (choix) {
+                    case 1 -> creerParticipation();
+                    case 2 -> {
+                        System.out.println("\nToutes les participations :");
+                        participationService.findAll().forEach(System.out::println);
+                    }
+                    case 3 -> rechercherParUtilisateur();
+                    case 4 -> rechercherParEvenement();
+                    case 5 -> mettreAJourParticipation();
+                    case 6 -> supprimerParticipation();
+                    case 7 -> {
+                        System.out.println("\nParticipations confirmées :");
+                        participationService.findParticipationsConfirmees().forEach(System.out::println);
+                    }
+                    case 8 -> {
+                        System.out.println("\nParticipations en attente :");
+                        participationService.findParticipationsEnAttente().forEach(System.out::println);
+                    }
+                    case 9 -> confirmerParticipation();
+                    case 10 -> annulerParticipation();
+                    case 0 -> System.out.println("Retour au menu principal...");
+                    default -> System.out.println("Choix invalide ! Veuillez choisir un numéro entre 0 et 10.");
+                }
+            } catch (Exception e) {
+                System.out.println("❌ Erreur : " + e.getMessage());
+            }
+        } while (choix != 0);
     }
 
+    // ────────────────────────────────────────────────
+// 1. Créer participation
+// ────────────────────────────────────────────────
+    private static void creerParticipation() {
+        try {
+            System.out.print("User ID : ");
+            String userInput = sc.nextLine().trim();
+            if (userInput.isEmpty()) throw new IllegalArgumentException("User ID obligatoire");
+            Long userId = Long.parseLong(userInput);
+            if (userId <= 0) throw new IllegalArgumentException("User ID doit être positif");
+
+            System.out.print("Événement ID : ");
+            String eventInput = sc.nextLine().trim();
+            if (eventInput.isEmpty()) throw new IllegalArgumentException("Événement ID obligatoire");
+            Long eventId = Long.parseLong(eventInput);
+            if (eventId <= 0) throw new IllegalArgumentException("Événement ID doit être positif");
+
+            System.out.print("Type (SIMPLE, HEBERGEMENT, GROUPE) : ");
+            String typeStr = sc.nextLine().trim().toUpperCase();
+            if (typeStr.isEmpty()) throw new IllegalArgumentException("Type obligatoire");
+            Participation.TypeParticipation type = Participation.TypeParticipation.valueOf(typeStr);
+
+            System.out.print("Contexte (COUPLE, AMIS, FAMILLE, SOLO, PROFESSIONNEL) : ");
+            String contexteStr = sc.nextLine().trim().toUpperCase();
+            if (contexteStr.isEmpty()) throw new IllegalArgumentException("Contexte obligatoire");
+            Participation.ContexteSocial contexte = Participation.ContexteSocial.valueOf(contexteStr);
+
+            int nuits = 0;
+            if (type == Participation.TypeParticipation.HEBERGEMENT) {
+                System.out.print("Nombre de nuits (≥ 1) : ");
+                String nuitsStr = sc.nextLine().trim();
+                if (nuitsStr.isEmpty()) throw new IllegalArgumentException("Nombre de nuits obligatoire pour HEBERGEMENT");
+                nuits = Integer.parseInt(nuitsStr);
+                if (nuits < 1) throw new IllegalArgumentException("Au moins 1 nuit pour un hébergement");
+            }
+
+            Participation p = new Participation(userId, eventId, type, contexte);
+            p.setHebergementNuits(nuits);
+            p.setStatut(Participation.StatutParticipation.EN_ATTENTE);
+            p.setDateInscription(LocalDateTime.now());
+
+            Participation created = participationService.create(p);
+            System.out.println("\n✅ Participation créée avec succès :");
+            System.out.println(created);
+
+        } catch (NumberFormatException e) {
+            System.out.println("❌ Erreur : veuillez entrer un nombre valide");
+        } catch (IllegalArgumentException e) {
+            System.out.println("❌ Erreur de saisie : " + e.getMessage());
+            System.out.println("Veuillez recommencer.");
+        } catch (Exception e) {
+            System.out.println("❌ Erreur inattendue : " + e.getMessage());
+        }
+    }
+
+    // ────────────────────────────────────────────────
+// 3. Rechercher par utilisateur
+// ────────────────────────────────────────────────
+    private static void rechercherParUtilisateur() {
+        try {
+            System.out.print("User ID : ");
+            String input = sc.nextLine().trim();
+            if (input.isEmpty()) throw new IllegalArgumentException("User ID obligatoire");
+            Long userId = Long.parseLong(input);
+            if (userId <= 0) throw new IllegalArgumentException("User ID doit être positif");
+
+            List<Participation> participations = participationService.findByUserId(userId);
+            if (participations.isEmpty()) {
+                System.out.println("Aucune participation trouvée pour l'utilisateur " + userId);
+            } else {
+                System.out.println("\nParticipations de l'utilisateur " + userId + " :");
+                participations.forEach(System.out::println);
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("❌ Veuillez entrer un nombre valide pour l'ID");
+        } catch (IllegalArgumentException e) {
+            System.out.println("❌ Erreur : " + e.getMessage());
+        }
+    }
+
+    // ────────────────────────────────────────────────
+// 4. Rechercher par événement
+// ────────────────────────────────────────────────
+    private static void rechercherParEvenement() {
+        try {
+            System.out.print("Événement ID : ");
+            String input = sc.nextLine().trim();
+            if (input.isEmpty()) throw new IllegalArgumentException("Événement ID obligatoire");
+            Long eventId = Long.parseLong(input);
+            if (eventId <= 0) throw new IllegalArgumentException("Événement ID doit être positif");
+
+            List<Participation> participations = participationService.findByEvenementId(eventId);
+            if (participations.isEmpty()) {
+                System.out.println("Aucune participation trouvée pour l'événement " + eventId);
+            } else {
+                System.out.println("\nParticipations à l'événement " + eventId + " :");
+                participations.forEach(System.out::println);
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("❌ Veuillez entrer un nombre valide pour l'ID");
+        } catch (IllegalArgumentException e) {
+            System.out.println("❌ Erreur : " + e.getMessage());
+        }
+    }
+
+    // ────────────────────────────────────────────────
+// 5. Mettre à jour participation
+// ────────────────────────────────────────────────
+    private static void mettreAJourParticipation() {
+        try {
+            System.out.print("ID de la participation à modifier : ");
+            String input = sc.nextLine().trim();
+            if (input.isEmpty()) throw new IllegalArgumentException("ID obligatoire");
+            Long id = Long.parseLong(input);
+            if (id <= 0) throw new IllegalArgumentException("ID doit être positif");
+
+            Optional<Participation> opt = participationService.findById(id);
+            if (opt.isEmpty()) {
+                System.out.println("❌ Participation introuvable avec l'ID " + id);
+                return;
+            }
+
+            Participation p = opt.get();
+            System.out.println("\nParticipation actuelle :");
+            System.out.println(p);
+
+            // Statut
+            System.out.print("Nouveau statut (EN_ATTENTE, CONFIRME, ANNULE, REFUSE) - vide pour garder : ");
+            String statutStr = sc.nextLine().trim().toUpperCase();
+            if (!statutStr.isEmpty()) {
+                try {
+                    p.setStatut(Participation.StatutParticipation.valueOf(statutStr));
+                } catch (IllegalArgumentException e) {
+                    throw new IllegalArgumentException("Statut invalide. Valeurs possibles : EN_ATTENTE, CONFIRME, ANNULE, REFUSE");
+                }
+            }
+
+            // Hébergement (seulement si type HEBERGEMENT)
+            if (p.getType() == Participation.TypeParticipation.HEBERGEMENT) {
+                System.out.print("Nouveau nombre de nuits (vide pour garder) : ");
+                String nuitsStr = sc.nextLine().trim();
+                if (!nuitsStr.isEmpty()) {
+                    int nuits = Integer.parseInt(nuitsStr);
+                    if (nuits < 0) throw new IllegalArgumentException("Nombre de nuits ne peut pas être négatif");
+                    p.setHebergementNuits(nuits);
+                }
+            }
+
+            Participation updated = participationService.update(p);
+            System.out.println("\n✅ Participation mise à jour avec succès :");
+            System.out.println(updated);
+
+        } catch (NumberFormatException e) {
+            System.out.println("❌ Veuillez entrer un nombre valide");
+        } catch (IllegalArgumentException e) {
+            System.out.println("❌ Erreur : " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("❌ Erreur inattendue : " + e.getMessage());
+        }
+    }
+
+    // ────────────────────────────────────────────────
+// 6. Supprimer participation
+// ────────────────────────────────────────────────
+    private static void supprimerParticipation() {
+        try {
+            System.out.print("ID de la participation à supprimer : ");
+            String input = sc.nextLine().trim();
+            if (input.isEmpty()) throw new IllegalArgumentException("ID obligatoire");
+            Long id = Long.parseLong(input);
+            if (id <= 0) throw new IllegalArgumentException("ID doit être positif");
+
+            if (participationService.delete(id)) {
+                System.out.println("✅ Participation supprimée avec succès (ID " + id + ")");
+            } else {
+                System.out.println("❌ Échec de la suppression : participation introuvable ou ne peut être supprimée");
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("❌ Veuillez entrer un nombre valide");
+        } catch (IllegalArgumentException e) {
+            System.out.println("❌ Erreur : " + e.getMessage());
+        }
+    }
+
+    // ────────────────────────────────────────────────
+// 9. Confirmer participation
+// ────────────────────────────────────────────────
+    private static void confirmerParticipation() {
+        try {
+            System.out.print("ID de la participation à confirmer : ");
+            String input = sc.nextLine().trim();
+            if (input.isEmpty()) throw new IllegalArgumentException("ID obligatoire");
+            Long id = Long.parseLong(input);
+            if (id <= 0) throw new IllegalArgumentException("ID doit être positif");
+
+            Participation confirmed = participationService.confirmerParticipation(id);
+            System.out.println("\n✅ Participation confirmée avec succès :");
+            System.out.println(confirmed);
+        } catch (NumberFormatException e) {
+            System.out.println("❌ Veuillez entrer un nombre valide");
+        } catch (Exception e) {
+            System.out.println("❌ Erreur : " + e.getMessage());
+        }
+    }
+
+    // ────────────────────────────────────────────────
+// 10. Annuler participation
+// ────────────────────────────────────────────────
+    private static void annulerParticipation() {
+        try {
+            System.out.print("ID de la participation à annuler : ");
+            String input = sc.nextLine().trim();
+            if (input.isEmpty()) throw new IllegalArgumentException("ID obligatoire");
+            Long id = Long.parseLong(input);
+            if (id <= 0) throw new IllegalArgumentException("ID doit être positif");
+
+            System.out.print("Raison de l'annulation : ");
+            String raison = sc.nextLine().trim();
+            if (raison.isEmpty()) throw new IllegalArgumentException("La raison est obligatoire");
+
+            Participation cancelled = participationService.annulerParticipation(id, raison);
+            System.out.println("\n✅ Participation annulée avec succès :");
+            System.out.println(cancelled);
+        } catch (NumberFormatException e) {
+            System.out.println("❌ Veuillez entrer un nombre valide");
+        } catch (IllegalArgumentException e) {
+            System.out.println("❌ Erreur : " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("❌ Erreur inattendue : " + e.getMessage());
+        }
+    }
     // ======================= TICKET =======================
     private static void testerTicket() {
         try {
