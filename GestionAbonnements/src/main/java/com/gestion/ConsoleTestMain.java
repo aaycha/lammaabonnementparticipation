@@ -2,9 +2,11 @@ package com.gestion;
 
 import com.gestion.controllers.EvenementDAO;
 import com.gestion.controllers.ProgrammeDAO;
+import com.gestion.controllers.ProgrammeRecommenderController;
 import com.gestion.criteria.ParticipationCriteria;
 import com.gestion.entities.*;
 import com.gestion.interfaces.AbonnementService;
+import com.gestion.interfaces.ProgrammeService;
 import com.gestion.interfaces.TicketService;
 import com.gestion.services.*;
 
@@ -41,7 +43,7 @@ public class ConsoleTestMain {
             switch (choix) {
                 case "1" -> afficherEvenements();
                 case "2" -> afficherProgrammesEvent();
-                case "3" -> afficherProgrammesRecommandes();
+                case "3" -> gestionProgrammeRecommender();
                 case "4" -> gestionParticipation(); // Bloc Participation
                 case "5" -> testerTicket();
                 case "6" -> testerAbonnement();
@@ -93,129 +95,6 @@ public class ConsoleTestMain {
         }
     }
 
-    // ======================= PROGRAMMES RECOMMANDÉS =======================
-    private static void afficherProgrammesRecommandes() {
-        try {
-            System.out.println("\n🎯 PROGRAMMES RECOMMANDÉS");
-
-            Participation participation = new Participation(
-                    1L,
-                    1L,
-                    Participation.TypeParticipation.SIMPLE,
-                    Participation.ContexteSocial.AMIS
-            );
-            participation.setId(1L);
-
-            List<ProgrammeRecommender> programmes =
-                    programmeRecoService.genererProgramme(participation);
-
-            programmes.forEach(p ->
-                    System.out.printf(
-                            "• %s | %s - %s | %s%n  ➜ %s%n",
-                            p.getActivite(),
-                            p.getHeureDebut(),
-                            p.getHeureFin(),
-                            p.getAmbiance(),
-                            p.getJustification()
-                    )
-            );
-        } catch (Exception e) {
-            System.out.println("❌ Erreur programme recommandé : " + e.getMessage());
-        }
-    }
-
-    // ======================= PARTICIPATION =======================
-    /*private static void gestionParticipation() {
-        int choix;
-        do {
-            System.out.println("\n=== MENU GESTION PARTICIPATION ===");
-            System.out.println("1) Créer participation");
-            System.out.println("2) Lister toutes les participations");
-            System.out.println("3) Rechercher par utilisateur");
-            System.out.println("4) Rechercher par événement");
-            System.out.println("5) Mettre à jour participation");
-            System.out.println("6) Supprimer participation");
-            System.out.println("0) Retour au menu principal");
-            System.out.print("Choix : ");
-            choix = Integer.parseInt(sc.nextLine());
-
-            switch (choix) {
-                case 1 -> creerParticipation();
-                case 2 -> participationService.findAll().forEach(System.out::println);
-                case 3 -> rechercherParUtilisateur();
-                case 4 -> rechercherParEvenement();
-                case 5 -> mettreAJourParticipation();
-                case 6 -> supprimerParticipation();
-                case 0 -> System.out.println("Retour au menu principal...");
-                default -> System.out.println("Choix invalide !");
-            }
-        } while (choix != 0);
-    }
-
-    private static void creerParticipation() {
-        try {
-            System.out.print("User ID : ");
-            Long userId = Long.parseLong(sc.nextLine());
-
-            System.out.print("Evenement ID : ");
-            Long eventId = Long.parseLong(sc.nextLine());
-
-            System.out.print("Type (SIMPLE, HEBERGEMENT, GROUPE) : ");
-            Participation.TypeParticipation type = Participation.TypeParticipation.valueOf(sc.nextLine().toUpperCase());
-
-            System.out.print("Contexte (COUPLE, AMIS, FAMILLE, SOLO, PROFESSIONNEL) : ");
-            Participation.ContexteSocial contexte = Participation.ContexteSocial.valueOf(sc.nextLine().toUpperCase());
-
-            int nuits = 0;
-            if (type == Participation.TypeParticipation.HEBERGEMENT) {
-                System.out.print("Nombre de nuits : ");
-                nuits = Integer.parseInt(sc.nextLine());
-            }
-
-            Participation p = new Participation(userId, eventId, type, contexte);
-            p.setHebergementNuits(nuits);
-            p.setStatut(Participation.StatutParticipation.EN_ATTENTE);
-            p.setDateInscription(java.time.LocalDateTime.now());
-
-            Participation created = participationService.create(p);
-            System.out.println("✅ Participation créée : " + created);
-        } catch (Exception e) {
-            System.out.println("❌ Erreur : " + e.getMessage());
-        }
-    }
-
-    private static void rechercherParUtilisateur() {
-        System.out.print("User ID : ");
-        Long userId = Long.parseLong(sc.nextLine());
-        participationService.findByUserId(userId).forEach(System.out::println);
-    }
-
-    private static void rechercherParEvenement() {
-        System.out.print("Evenement ID : ");
-        Long eventId = Long.parseLong(sc.nextLine());
-        participationService.findByEvenementId(eventId).forEach(System.out::println);
-    }
-
-    private static void mettreAJourParticipation() {
-        System.out.print("ID Participation à mettre à jour : ");
-        Long id = Long.parseLong(sc.nextLine());
-        participationService.findById(id).ifPresentOrElse(p -> {
-            if (p.getType() == Participation.TypeParticipation.HEBERGEMENT) {
-                System.out.print("Nouveau nombre de nuits : ");
-                int nuits = Integer.parseInt(sc.nextLine());
-                p.setHebergementNuits(nuits);
-            }
-            participationService.update(p);
-            System.out.println("✅ Mise à jour effectuée : " + p);
-        }, () -> System.out.println("Participation introuvable !"));
-    }
-
-    private static void supprimerParticipation() {
-        System.out.print("ID Participation à supprimer : ");
-        Long id = Long.parseLong(sc.nextLine());
-        if (participationService.delete(id)) System.out.println("✅ Participation supprimée !");
-        else System.out.println("❌ Échec suppression !");
-    }*/
 
     // ======================= PARTICIPATION =======================
     private static void gestionParticipation() {
@@ -971,50 +850,428 @@ public class ConsoleTestMain {
             throw new IllegalArgumentException("Format date invalide : AAAA-MM-JJ");
         }
     }
-}
 
-    // ======================= ABONNEMENT =======================
-    /*private static void testerAbonnement() {
-        boolean quitter = false;
 
-        while (!quitter) {
-            System.out.println("\n================ ABONNEMENT - MENU =================");
-            System.out.println("1️⃣  Créer un abonnement");
-            System.out.println("2️⃣  Afficher tous les abonnements");
-            System.out.println("3️⃣  Mettre à jour un abonnement");
-            System.out.println("4️⃣  Supprimer un abonnement");
-            System.out.println("5️⃣  Rechercher un abonnement par ID");
-            System.out.println("6️⃣  Filtrer par type");
-            System.out.println("7️⃣  Filtrer par statut");
-            System.out.println("8️⃣  Filtrer par utilisateur");
-            System.out.println("9️⃣  Afficher abonnements proches de l'expiration");
-            System.out.println("10️ Ajouter des points à un abonnement");
-            System.out.println("11️ Utiliser des points d'un abonnement");
-            System.out.println("0️⃣  Retour au menu principal");
+    // ======================= PROGRAMME RECOMMENDER =======================
+    private static final ProgrammeRecommenderService programmeRecommenderService = new ProgrammeRecommenderService();
+    private static final ProgrammeRecommenderController programmeRecommenderController = new ProgrammeRecommenderController();
+
+    private static void gestionProgrammeRecommender() {
+        int choix;
+        do {
+            System.out.println("\n======================================");
+            System.out.println("   GESTION DES PROGRAMMES RECOMMANDÉS   ");
+            System.out.println("======================================");
+            System.out.println("1) Générer et sauvegarder programmes recommandés pour une participation");
+            System.out.println("2) Lister tous les programmes recommandés");
+            System.out.println("3) Lister les programmes d'une participation spécifique");
+            System.out.println("4) Afficher les programmes par ambiance");
+            System.out.println("5) Rechercher les programmes par mot-clé dans l'activité");
+            System.out.println("6) Lister les programmes avec horaires valides");
+            System.out.println("7) Lister les programmes recommandés (recommande = true)");
+            System.out.println("8) Lister les programmes non recommandés (recommande = false)");
+            System.out.println("9) Supprimer tous les programmes d'une participation");
+            System.out.println("10) Afficher statistiques rapides des programmes");
+            System.out.println("0) Retour au menu principal");
+            System.out.println("======================================");
             System.out.print("👉 Votre choix : ");
 
-            String choix = sc.nextLine();
+            String line = sc.nextLine().trim();
+
+            try {
+                choix = Integer.parseInt(line);
+            } catch (NumberFormatException e) {
+                System.out.println("\n→ Choix invalide. Veuillez entrer un nombre entre 0 et 10.");
+                choix = -1;
+                continue;
+            }
+
+            System.out.println();
 
             try {
                 switch (choix) {
-                    case "1" -> {
-                        System.out.print("Entrez l'ID utilisateur : ");
-                        Long userId = Long.parseLong(sc.nextLine());
-                        System.out.print("Type d'abonnement (MENSUEL/PREMIUM/ANNUEL) : ");
-                        Abonnement.TypeAbonnement type = Abonnement.TypeAbonnement.valueOf(sc.nextLine().toUpperCase());
-                        System.out.print("Prix : ");
-                        BigDecimal prix = new BigDecimal(sc.nextLine());
-                        Abonnement a = new Abonnement(userId, type, LocalDate.now(), prix, true);
-                        abonnementService.create(a);
-                        System.out.println("✅ Abonnement créé : " + a);
-                    }
-                    case "2" -> abonnementService.findAll().forEach(System.out::println);
-                    case "0" -> quitter = true;
-                    default -> System.out.println("⚠️ Choix invalide !");
+                    case 1  -> genererEtSauvegarderProgrammes();
+                    case 2  -> afficherTousLesProgrammes();
+                    case 3  -> listerProgrammesParParticipation();
+                    case 4  -> filtrerParAmbiance();
+                    case 5  -> rechercherParActivite();
+                    case 6  -> afficherProgrammesValides();
+                    case 7  -> afficherProgrammesRecommandes();
+                    case 8  -> afficherProgrammesNonRecommandes();
+                    case 9  -> supprimerProgrammesParParticipation();
+                    case 10 -> afficherStatsProgrammes();
+                    case 0  -> System.out.println("Retour au menu principal...");
+                    default -> System.out.println("Choix invalide ! Veuillez entrer un numéro entre 0 et 10.");
                 }
             } catch (Exception e) {
                 System.out.println("❌ Erreur : " + e.getMessage());
+                e.printStackTrace();
             }
+
+            System.out.println();
+        } while (choix != 0);
+    }
+
+    // ────────────────────────────────────────────────
+// 1. Générer et sauvegarder programmes recommandés
+// ────────────────────────────────────────────────
+    private static void genererEtSauvegarderProgrammes() {
+        try {
+            System.out.print("ID de la participation : ");
+            String idStr = sc.nextLine().trim();
+            if (idStr.isEmpty()) throw new IllegalArgumentException("ID participation obligatoire");
+            Long participationId = Long.parseLong(idStr);
+
+            System.out.println("[DEBUG] ID saisi : " + participationId);
+
+            Participation participation = new Participation();
+            participation.setId(participationId);
+
+            System.out.print("Contexte social (COUPLE/AMIS/FAMILLE/SOLO/PROFESSIONNEL) : ");
+            String contexteStr = sc.nextLine().trim().toUpperCase();
+            if (contexteStr.isEmpty()) {
+                System.out.println("→ Contexte non fourni → génération impossible.");
+                return;
+            }
+
+            try {
+                participation.setContexteSocial(Participation.ContexteSocial.valueOf(contexteStr));
+                System.out.println("[DEBUG] Contexte validé : " + participation.getContexteSocial());
+            } catch (IllegalArgumentException e) {
+                System.out.println("❌ Contexte invalide. Valeurs possibles : COUPLE, AMIS, FAMILLE, SOLO, PROFESSIONNEL");
+                return;
+            }
+
+            List<ProgrammeRecommender> programmes = programmeRecommenderService.genererProgramme(participation);
+
+            System.out.println("[DEBUG] Nombre de programmes générés : " + programmes.size());
+
+            if (programmes.isEmpty()) {
+                System.out.println("→ Aucun programme généré pour ce contexte.");
+                return;
+            }
+
+            System.out.println("\nProgrammes générés (" + programmes.size() + ") :");
+            programmes.forEach(prog -> System.out.println("  • " + prog));
+
+            System.out.print("\nVoulez-vous sauvegarder ces programmes en base ? (oui/non) : ");
+            String reponse = sc.nextLine().trim().toLowerCase();
+
+            if (!reponse.equals("oui") && !reponse.equals("o") && !reponse.isEmpty()) {
+                System.out.println("[DEBUG] Sauvegarde annulée par l'utilisateur");
+                return;
+            }
+
+            System.out.println("[DEBUG] Début de la sauvegarde...");
+
+            int savedCount = 0;
+            for (ProgrammeRecommender prog : programmes) {
+                savedCount++;
+                System.out.print("  Insertion " + savedCount + "/" + programmes.size() + " → " + prog.getActivite() + " ... ");
+                try {
+                    programmeRecommenderController.save(prog);
+                    System.out.println("OK (ID = " + prog.getId() + ")");
+                } catch (Exception ex) {
+                    System.out.println("ÉCHEC ! " + ex.getClass().getSimpleName() + " : " + ex.getMessage());
+                }
+            }
+
+            System.out.println("[DEBUG] Sauvegarde terminée (" + savedCount + " insertions tentées)");
+
+        } catch (NumberFormatException e) {
+            System.out.println("❌ ID invalide : " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            System.out.println("❌ Erreur de saisie : " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("❌ Erreur globale : " + e.getMessage());
+            e.printStackTrace();
         }
     }
-}*/
+
+    // ────────────────────────────────────────────────
+// 2. Lister tous les programmes recommandés
+// ────────────────────────────────────────────────
+    private static void afficherTousLesProgrammes() {
+        List<ProgrammeRecommender> all = programmeRecommenderController.findAll();
+        if (all.isEmpty()) {
+            System.out.println("Aucun programme recommandé enregistré pour le moment.");
+        } else {
+            System.out.println("Tous les programmes recommandés (" + all.size() + ") :");
+            all.forEach(System.out::println);
+        }
+    }
+
+    // ────────────────────────────────────────────────
+// 3. Lister les programmes d'une participation spécifique
+// ────────────────────────────────────────────────
+    private static void listerProgrammesParParticipation() {
+        try {
+            System.out.print("ID de la participation : ");
+            String input = sc.nextLine().trim();
+            if (input.isEmpty()) throw new IllegalArgumentException("ID obligatoire");
+            Long participationId = Long.parseLong(input);
+
+            System.out.println("[DEBUG] Recherche pour participation_id = " + participationId);
+
+            List<ProgrammeRecommender> programmes = programmeRecommenderController.findByParticipation(participationId);
+
+            System.out.println("[DEBUG] Nombre de programmes trouvés : " + programmes.size());
+
+            if (programmes.isEmpty()) {
+                System.out.println("Aucun programme associé à la participation " + participationId);
+                System.out.println("[DEBUG] Vérification manuelle suggérée : SELECT * FROM programme_recommande WHERE participation_id = " + participationId + ";");
+            } else {
+                System.out.println("\nProgrammes recommandés pour participation " + participationId + " (" + programmes.size() + ") :");
+                programmes.forEach(System.out::println);
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("❌ Veuillez entrer un nombre valide");
+        } catch (Exception e) {
+            System.out.println("❌ Erreur : " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // ────────────────────────────────────────────────
+// 4. Afficher les programmes par ambiance
+// ────────────────────────────────────────────────
+    private static void filtrerParAmbiance() {
+        try {
+            System.out.print("Ambiance (CALME / FESTIVE / SOCIALE / AVENTURE / CULTURELLE) : ");
+            String ambianceStr = sc.nextLine().trim().toUpperCase();
+            if (ambianceStr.isEmpty()) throw new IllegalArgumentException("Ambiance obligatoire");
+
+            ProgrammeRecommender.Ambiance ambiance = ProgrammeRecommender.Ambiance.valueOf(ambianceStr);
+
+            System.out.print("ID participation (vide = tous) : ");
+            String idStr = sc.nextLine().trim();
+
+            List<ProgrammeRecommender> source;
+            if (idStr.isEmpty()) {
+                source = programmeRecommenderController.findAll();
+            } else {
+                Long participationId = Long.parseLong(idStr);
+                source = programmeRecommenderController.findByParticipation(participationId);
+            }
+
+            List<ProgrammeRecommender> filtered = source.stream()
+                    .filter(p -> p.getAmbiance() == ambiance)
+                    .collect(Collectors.toList());
+
+            if (filtered.isEmpty()) {
+                System.out.println("Aucun programme avec l'ambiance " + ambiance);
+            } else {
+                System.out.println("\nProgrammes en ambiance " + ambiance + " (" + filtered.size() + ") :");
+                filtered.forEach(System.out::println);
+            }
+
+        } catch (NumberFormatException e) {
+            System.out.println("❌ ID participation invalide");
+        } catch (IllegalArgumentException e) {
+            System.out.println("❌ Erreur : " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("❌ Erreur : " + e.getMessage());
+        }
+    }
+
+    // ────────────────────────────────────────────────
+// 5. Rechercher les programmes par mot-clé dans l'activité
+// ────────────────────────────────────────────────
+    private static void rechercherParActivite() {
+        try {
+            System.out.print("Mot-clé dans l'activité : ");
+            String motCle = sc.nextLine().trim().toLowerCase();
+            if (motCle.isEmpty()) throw new IllegalArgumentException("Mot-clé obligatoire");
+
+            System.out.print("ID participation (vide = tous) : ");
+            String idStr = sc.nextLine().trim();
+
+            List<ProgrammeRecommender> source;
+            if (idStr.isEmpty()) {
+                source = programmeRecommenderController.findAll();
+            } else {
+                Long participationId = Long.parseLong(idStr);
+                source = programmeRecommenderController.findByParticipation(participationId);
+            }
+
+            List<ProgrammeRecommender> result = source.stream()
+                    .filter(p -> p.getActivite().toLowerCase().contains(motCle))
+                    .collect(Collectors.toList());
+
+            if (result.isEmpty()) {
+                System.out.println("Aucun programme contenant '" + motCle + "'");
+            } else {
+                System.out.println("\nRésultats pour '" + motCle + "' (" + result.size() + ") :");
+                result.forEach(System.out::println);
+            }
+
+        } catch (NumberFormatException e) {
+            System.out.println("❌ ID participation invalide");
+        } catch (IllegalArgumentException e) {
+            System.out.println("❌ Erreur : " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("❌ Erreur : " + e.getMessage());
+        }
+    }
+
+    // ────────────────────────────────────────────────
+// 6. Lister les programmes avec horaires valides
+// ────────────────────────────────────────────────
+    private static void afficherProgrammesValides() {
+        try {
+            System.out.print("ID participation (vide = tous) : ");
+            String idStr = sc.nextLine().trim();
+
+            List<ProgrammeRecommender> source;
+            if (idStr.isEmpty()) {
+                source = programmeRecommenderController.findAll();
+            } else {
+                Long participationId = Long.parseLong(idStr);
+                source = programmeRecommenderController.findByParticipation(participationId);
+            }
+
+            List<ProgrammeRecommender> valides = source.stream()
+                    .filter(ProgrammeRecommender::estValide)
+                    .collect(Collectors.toList());
+
+            if (valides.isEmpty()) {
+                System.out.println("Aucun programme avec des horaires valides.");
+            } else {
+                System.out.println("\nProgrammes avec horaires valides (" + valides.size() + ") :");
+                valides.forEach(System.out::println);
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("❌ ID participation invalide");
+        } catch (Exception e) {
+            System.out.println("❌ Erreur : " + e.getMessage());
+        }
+    }
+
+    // ────────────────────────────────────────────────
+// 7. Lister les programmes recommandés (recommande = true)
+// ────────────────────────────────────────────────
+    private static void afficherProgrammesRecommandes() {
+        try {
+            System.out.print("ID participation (vide = tous) : ");
+            String idStr = sc.nextLine().trim();
+
+            List<ProgrammeRecommender> source;
+            if (idStr.isEmpty()) {
+                source = programmeRecommenderController.findAll();
+            } else {
+                Long participationId = Long.parseLong(idStr);
+                source = programmeRecommenderController.findByParticipation(participationId);
+            }
+
+            List<ProgrammeRecommender> recommandes = source.stream()
+                    .filter(ProgrammeRecommender::isRecommande)
+                    .collect(Collectors.toList());
+
+            if (recommandes.isEmpty()) {
+                System.out.println("Aucun programme recommandé.");
+            } else {
+                System.out.println("\nProgrammes recommandés (" + recommandes.size() + ") :");
+                recommandes.forEach(System.out::println);
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("❌ ID participation invalide");
+        } catch (Exception e) {
+            System.out.println("❌ Erreur : " + e.getMessage());
+        }
+    }
+
+    // ────────────────────────────────────────────────
+// 8. Lister les programmes non recommandés (recommande = false)
+// ────────────────────────────────────────────────
+    private static void afficherProgrammesNonRecommandes() {
+        try {
+            System.out.print("ID participation (vide = tous) : ");
+            String idStr = sc.nextLine().trim();
+
+            List<ProgrammeRecommender> source;
+            if (idStr.isEmpty()) {
+                source = programmeRecommenderController.findAll();
+            } else {
+                Long participationId = Long.parseLong(idStr);
+                source = programmeRecommenderController.findByParticipation(participationId);
+            }
+
+            List<ProgrammeRecommender> nonRecommandes = source.stream()
+                    .filter(p -> !p.isRecommande())
+                    .collect(Collectors.toList());
+
+            if (nonRecommandes.isEmpty()) {
+                System.out.println("Aucun programme non recommandé.");
+            } else {
+                System.out.println("\nProgrammes non recommandés (" + nonRecommandes.size() + ") :");
+                nonRecommandes.forEach(System.out::println);
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("❌ ID participation invalide");
+        } catch (Exception e) {
+            System.out.println("❌ Erreur : " + e.getMessage());
+        }
+    }
+
+    // ────────────────────────────────────────────────
+// 9. Supprimer tous les programmes d'une participation
+// ────────────────────────────────────────────────
+    private static void supprimerProgrammesParParticipation() {
+        try {
+            System.out.print("ID de la participation à nettoyer : ");
+            String input = sc.nextLine().trim();
+            if (input.isEmpty()) throw new IllegalArgumentException("ID obligatoire");
+            Long participationId = Long.parseLong(input);
+
+            System.out.println("[DEBUG] Suppression des programmes pour participation_id = " + participationId);
+
+            programmeRecommenderController.deleteByParticipation(participationId);
+            System.out.println("→ Tous les programmes de la participation " + participationId + " ont été supprimés avec succès.");
+        } catch (NumberFormatException e) {
+            System.out.println("❌ Veuillez entrer un nombre valide");
+        } catch (Exception e) {
+            System.out.println("❌ Erreur : " + e.getMessage());
+        }
+    }
+
+    // ────────────────────────────────────────────────
+// 10. Afficher statistiques rapides des programmes
+// ────────────────────────────────────────────────
+    private static void afficherStatsProgrammes() {
+        System.out.println("\n=== Statistiques programmes recommandés ===");
+        try {
+            System.out.print("ID participation (vide = tous) : ");
+            String idStr = sc.nextLine().trim();
+
+            List<ProgrammeRecommender> source;
+            if (idStr.isEmpty()) {
+                source = programmeRecommenderController.findAll();
+                System.out.println("[DEBUG] Statistiques globales (tous programmes)");
+            } else {
+                Long participationId = Long.parseLong(idStr);
+                source = programmeRecommenderController.findByParticipation(participationId);
+                System.out.println("[DEBUG] Statistiques pour participation " + participationId);
+            }
+
+            long total = source.size();
+            long calmes = source.stream().filter(p -> p.getAmbiance() == ProgrammeRecommender.Ambiance.CALME).count();
+            long festifs = source.stream().filter(p -> p.getAmbiance() == ProgrammeRecommender.Ambiance.FESTIVE).count();
+            long sociaux = source.stream().filter(p -> p.getAmbiance() == ProgrammeRecommender.Ambiance.SOCIALE).count();
+            long recommandes = source.stream().filter(ProgrammeRecommender::isRecommande).count();
+
+            System.out.printf("Total programmes              : %d%n", total);
+            System.out.printf("Recommandés                   : %d (%.1f%%)%n",
+                    recommandes, total > 0 ? (double) recommandes / total * 100 : 0);
+            System.out.printf("Ambiance CALME                : %d%n", calmes);
+            System.out.printf("Ambiance FESTIVE              : %d%n", festifs);
+            System.out.printf("Ambiance SOCIALE              : %d%n", sociaux);
+
+        } catch (NumberFormatException e) {
+            System.out.println("❌ ID participation invalide");
+        } catch (Exception e) {
+            System.out.println("❌ Erreur lors de l'affichage des stats : " + e.getMessage());
+        }
+    }
+
+}
+

@@ -1,111 +1,5 @@
+
 /*package com.gestion.entities;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
-
-import java.time.LocalDateTime;
-
-/**
- * Entité représentant un programme d'événement
- */
-/*@JsonInclude(JsonInclude.Include.NON_NULL)
-public class ProgrammeRecommender {
-    private Long idProg;
-    private Long eventId;
-    private String titre;
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @JsonSerialize(using = LocalDateTimeSerializer.class)
-    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
-    private LocalDateTime debut;
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @JsonSerialize(using = LocalDateTimeSerializer.class)
-    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
-    private LocalDateTime fin;
-
-    // Constructeurs
-    public ProgrammeRecommender() {}
-
-    public ProgrammeRecommender(Long eventId, String titre, LocalDateTime debut, LocalDateTime fin) {
-        this.eventId = eventId;
-        this.titre = titre;
-        this.debut = debut;
-        this.fin = fin;
-    }
-
-    // Getters et Setters
-    public Long getIdProg() {
-        return idProg;
-    }
-
-    public void setIdProg(Long idProg) {
-        this.idProg = idProg;
-    }
-
-    public Long getEventId() {
-        return eventId;
-    }
-
-    public void setEventId(Long eventId) {
-        this.eventId = eventId;
-    }
-
-    public String getTitre() {
-        return titre;
-    }
-
-    public void setTitre(String titre) {
-        this.titre = titre;
-    }
-
-    public LocalDateTime getDebut() {
-        return debut;
-    }
-
-    public void setDebut(LocalDateTime debut) {
-        this.debut = debut;
-    }
-
-    public LocalDateTime getFin() {
-        return fin;
-    }
-
-    public void setFin(LocalDateTime fin) {
-        this.fin = fin;
-    }
-
-    // Méthodes utilitaires
-    public boolean estEnCours() {
-        LocalDateTime now = LocalDateTime.now();
-        return debut != null && fin != null &&
-               !now.isBefore(debut) && !now.isAfter(fin);
-    }
-
-    public boolean estTermine() {
-        return fin != null && fin.isBefore(LocalDateTime.now());
-    }
-
-    public boolean estAVenir() {
-        return debut != null && debut.isAfter(LocalDateTime.now());
-    }
-
-    public long getDureeMinutes() {
-        if (debut != null && fin != null) {
-            return java.time.Duration.between(debut, fin).toMinutes();
-        }
-        return 0;
-    }
-
-    @Override
-    public String toString() {
-        return String.format("Programme{idProg=%d, eventId=%d, titre='%s', debut=%s, fin=%s}",
-                           idProg, eventId, titre, debut, fin);
-    }
-}*/
-package com.gestion.entities;
 
 import java.time.LocalTime;
 
@@ -161,4 +55,78 @@ public class ProgrammeRecommender {
     public Ambiance getAmbiance() { return ambiance; }
     public String getJustification() { return justification; }
     public boolean isRecommande() { return recommande; }
+}*/
+
+package com.gestion.entities;
+
+import java.time.LocalTime;
+import java.util.Objects;
+
+public class ProgrammeRecommender {
+
+    private Long id;
+    private Long participationId;  // ← ON UNIFIE : camelCase en Java
+
+    private String activite;
+    private LocalTime heureDebut;
+    private LocalTime heureFin;
+
+    private Ambiance ambiance;
+    private String justification;
+    private boolean recommande = true;
+
+    public enum Ambiance {
+        CALME, FESTIVE, SOCIALE, AVENTURE, CULTURELLE
+    }
+
+    public ProgrammeRecommender() {
+    }
+
+    public ProgrammeRecommender(Long participationId, String activite, LocalTime heureDebut,
+                                LocalTime heureFin, Ambiance ambiance, String justification) {
+        this.participationId = participationId;
+        this.activite = activite;
+        this.heureDebut = heureDebut;
+        this.heureFin = heureFin;
+        this.ambiance = ambiance;
+        this.justification = justification;
+    }
+
+    public boolean estValide() {
+        return heureDebut != null && heureFin != null &&
+                !heureFin.isBefore(heureDebut) && !heureDebut.equals(heureFin);
+    }
+
+    // Getters & Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public Long getParticipationId() { return participationId; }
+    public void setParticipationId(Long participationId) { this.participationId = participationId; }
+
+    public String getActivite() { return activite; }
+    public void setActivite(String activite) { this.activite = activite; }
+
+    public LocalTime getHeureDebut() { return heureDebut; }
+    public void setHeureDebut(LocalTime heureDebut) { this.heureDebut = heureDebut; }
+
+    public LocalTime getHeureFin() { return heureFin; }
+    public void setHeureFin(LocalTime heureFin) { this.heureFin = heureFin; }
+
+    public Ambiance getAmbiance() { return ambiance; }
+    public void setAmbiance(Ambiance ambiance) { this.ambiance = ambiance; }
+
+    public String getJustification() { return justification; }
+    public void setJustification(String justification) { this.justification = justification; }
+
+    public boolean isRecommande() { return recommande; }
+    public void setRecommande(boolean recommande) { this.recommande = recommande; }
+
+    @Override
+    public String toString() {
+        return String.format(
+                "Programme: %-25s | %s → %s | Ambiance: %-10s | %s",
+                activite, heureDebut, heureFin, ambiance, justification
+        );
+    }
 }

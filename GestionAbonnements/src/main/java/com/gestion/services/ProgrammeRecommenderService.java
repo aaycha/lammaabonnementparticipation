@@ -271,7 +271,7 @@ import java.util.stream.Collectors;
         return programme;
     }
 }*/
-package com.gestion.services;
+/*package com.gestion.services;
 
 import com.gestion.entities.Participation;
 import com.gestion.entities.ProgrammeRecommender;
@@ -354,5 +354,82 @@ public class ProgrammeRecommenderService {
         }
 
         return programmes;
+    }
+}*/
+package com.gestion.services;
+
+import com.gestion.controllers.ProgrammeRecommenderController;
+import com.gestion.entities.Participation;
+import com.gestion.entities.ProgrammeRecommender;
+import com.gestion.interfaces.ProgrammeService;
+
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ProgrammeRecommenderService implements ProgrammeService {
+
+    private final ProgrammeRecommenderController controller = new ProgrammeRecommenderController();
+
+    @Override
+    public List<ProgrammeRecommender> genererProgramme(Participation participation) {
+        if (participation == null || participation.getContexteSocial() == null) {
+            return List.of();
+        }
+
+        List<ProgrammeRecommender> programmes = new ArrayList<>();
+
+        switch (participation.getContexteSocial()) {
+            case COUPLE -> {
+                programmes.add(creerProgramme(participation.getId(), "Dîner romantique aux chandelles", LocalTime.of(19, 30), LocalTime.of(22, 0), ProgrammeRecommender.Ambiance.CALME, "Moment privilégié pour les couples – ambiance intime et romantique"));
+                programmes.add(creerProgramme(participation.getId(), "Balade nocturne & observation des étoiles", LocalTime.of(22, 30), LocalTime.of(23, 30), ProgrammeRecommender.Ambiance.CALME, "Activité douce et romantique en fin de soirée"));
+            }
+            case AMIS -> {
+                programmes.add(creerProgramme(participation.getId(), "Barbecue géant & playlist collaborative", LocalTime.of(17, 0), LocalTime.of(20, 0), ProgrammeRecommender.Ambiance.FESTIVE, "Activité collective et conviviale par excellence"));
+                programmes.add(creerProgramme(participation.getId(), "Karaoké ou jeux d'ambiance", LocalTime.of(20, 30), LocalTime.of(23, 0), ProgrammeRecommender.Ambiance.FESTIVE, "Rires garantis et bonne humeur entre amis"));
+            }
+            case FAMILLE -> {
+                programmes.add(creerProgramme(participation.getId(), "Pique-nique familial & jeux pour tous", LocalTime.of(11, 30), LocalTime.of(14, 30), ProgrammeRecommender.Ambiance.SOCIALE, "Activité adaptée à tous les âges"));
+                programmes.add(creerProgramme(participation.getId(), "Atelier créatif ou chasse au trésor", LocalTime.of(15, 0), LocalTime.of(17, 0), ProgrammeRecommender.Ambiance.SOCIALE, "Moment de partage et de créativité familiale"));
+            }
+            case SOLO -> {
+                programmes.add(creerProgramme(participation.getId(), "Moment détente & lecture / méditation", LocalTime.of(14, 30), LocalTime.of(16, 30), ProgrammeRecommender.Ambiance.CALME, "Espace personnel de ressourcement"));
+                programmes.add(creerProgramme(participation.getId(), "Balade contemplative ou séance photo personnelle", LocalTime.of(17, 0), LocalTime.of(18, 30), ProgrammeRecommender.Ambiance.CALME, "Activité introspective et apaisante"));
+            }
+            case PROFESSIONNEL -> {
+                programmes.add(creerProgramme(participation.getId(), "Session networking & échanges de cartes", LocalTime.of(16, 30), LocalTime.of(18, 0), ProgrammeRecommender.Ambiance.SOCIALE, "Favorise les rencontres professionnelles utiles"));
+                programmes.add(creerProgramme(participation.getId(), "Mini-conférence ou pitch rapide", LocalTime.of(18, 15), LocalTime.of(19, 30), ProgrammeRecommender.Ambiance.SOCIALE, "Présentation et visibilité professionnelle"));
+            }
+        }
+
+        return programmes;
+    }
+
+    @Override
+    public List<ProgrammeRecommender> genererEtSauvegarder(Long participationId) {
+        // À implémenter : récupérer la participation réelle via un service
+        // Ici simulation simple
+        Participation participation = new Participation();
+        participation.setId(participationId);
+        // participation.setContexteSocial(...); // à récupérer en base
+
+        List<ProgrammeRecommender> programmes = genererProgramme(participation);
+
+        // Sauvegarde
+        for (ProgrammeRecommender prog : programmes) {
+            controller.save(prog);
+        }
+
+        return programmes;
+    }
+
+    @Override
+    public List<ProgrammeRecommender> findByParticipation(Long participationId) {
+        return controller.findByParticipation(participationId);
+    }
+
+    private ProgrammeRecommender creerProgramme(Long participationId, String activite, LocalTime debut, LocalTime fin,
+                                                ProgrammeRecommender.Ambiance ambiance, String justification) {
+        return new ProgrammeRecommender(participationId, activite, debut, fin, ambiance, justification);
     }
 }

@@ -67,15 +67,25 @@ public interface ProgrammeService {
 
 package com.gestion.interfaces;
 
+import com.gestion.entities.Participation;
 import com.gestion.entities.ProgrammeRecommender;
 
 import java.util.List;
 
 public interface ProgrammeService {
 
-    void genererProgrammeSelonParticipation(Long participationId);
+    /**
+     * Génère une liste de programmes recommandés selon le contexte de la participation
+     */
+    List<ProgrammeRecommender> genererProgramme(Participation participation);
 
+    /**
+     * Génère les programmes pour une participation existante et les sauvegarde
+     */
+    List<ProgrammeRecommender> genererEtSauvegarder(Long participationId);
+
+    /**
+     * Récupère les programmes associés à une participation
+     */
     List<ProgrammeRecommender> findByParticipation(Long participationId);
 }
-
-
