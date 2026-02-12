@@ -458,7 +458,7 @@ public class ConsoleTestMain {
 
 
     // ======================= TICKET =======================
-    private static void testerTicket() {
+    /*private static void testerTicket() {
         try {
             System.out.println("\n🎫 TEST TICKET");
 
@@ -486,9 +486,356 @@ public class ConsoleTestMain {
         } catch (Exception e) {
             System.out.println("❌ Erreur ticket : " + e.getMessage());
         }
+    }*/
+
+    // ======================= TICKET =======================
+    private static void testerTicket() {
+        boolean quitter = false;
+
+        while (!quitter) {
+            System.out.println("\n======================================");
+            System.out.println("      🎫   GESTION DES TICKETS   🎫      ");
+            System.out.println("======================================");
+            System.out.println("1) Créer un nouveau ticket");
+            System.out.println("2) Afficher un ticket par ID");
+            System.out.println("3) Lister tous les tickets");
+            System.out.println("4) Lister tous les tickets (avec tri)");
+            System.out.println("5) Modifier un ticket");
+            System.out.println("6) Supprimer un ticket");
+            System.out.println("7) Rechercher tickets par participation");
+            System.out.println("8) Rechercher tickets par utilisateur");
+            System.out.println("9) Rechercher tickets par type");
+            System.out.println("10) Rechercher tickets par statut");
+            System.out.println("11) Rechercher tickets par format");
+            System.out.println("12) Rechercher tickets près d'une position (coordonnées)");
+            System.out.println("13) Rechercher tickets par lieu");
+            System.out.println("14) Marquer un ticket comme utilisé");
+            System.out.println("15) Annuler un ticket");
+            System.out.println("16) Lister les tickets valides");
+            System.out.println("17) Lister les tickets expirés");
+            System.out.println("18) Valider un ticket par code unique");
+            System.out.println("0) Retour au menu principal");
+            System.out.println("======================================");
+            System.out.print("👉 Votre choix : ");
+
+            String choixStr = sc.nextLine().trim();
+            int choix;
+
+            try {
+                choix = Integer.parseInt(choixStr);
+            } catch (NumberFormatException e) {
+                System.out.println("❌ Veuillez entrer un nombre valide.");
+                continue;
+            }
+
+            System.out.println();
+
+            try {
+                switch (choix) {
+                    case 1  -> creerTicketInteractif();
+                    case 2  -> afficherTicketParId();
+                    case 3  -> afficherTousTickets();
+                    case 4  -> afficherTousTicketsAvecTri();
+                    case 5  -> modifierTicketInteractif();
+                    case 6  -> supprimerTicketInteractif();
+                    case 7  -> listerParParticipation();
+                    case 8  -> listerParUtilisateur();
+                    case 9  -> listerParType();
+                    case 10 -> listerParStatut();
+                    case 11 -> listerParFormat();
+                    case 12 -> listerParCoordonnees();
+                    case 13 -> listerParLieu();
+                    case 14 -> marquerUtilise();
+                    case 15 -> annulerTicket();
+                    case 16 -> listerTicketsValides();
+                    case 17 -> listerTicketsExpires();
+                    case 18 -> validerTicketParCode();
+                    case 0  -> {
+                        System.out.println("Retour au menu principal...");
+                        quitter = true;
+                    }
+                    default -> System.out.println("Choix invalide. Essayez encore.");
+                }
+            } catch (Exception e) {
+                System.out.println("❌ Erreur : " + e.getMessage());
+                if (e.getMessage() != null && e.getMessage().toLowerCase().contains("invalide")) {
+                    System.out.println("   → Vérifiez les valeurs saisies (ID positif, type/format correct, etc.)");
+                }
+            }
+
+            System.out.println();
+        }
     }
 
+// ────────────────────────────────────────────────
+// Méthodes auxiliaires (CRUD + filtres)
+// ────────────────────────────────────────────────
 
+    private static void creerTicketInteractif() {
+        try {
+            System.out.println("\n📝 Création d'un nouveau ticket");
+
+            System.out.print("ID participation : ");
+            Long participationId = Long.parseLong(sc.nextLine().trim());
+
+            System.out.print("ID utilisateur : ");
+            Long userId = Long.parseLong(sc.nextLine().trim());
+
+            System.out.print("Type (TICKET / BADGE / PASS) : ");
+            String typeStr = sc.nextLine().trim().toUpperCase();
+            Ticket.TypeTicket type = Ticket.TypeTicket.valueOf(typeStr);
+
+            System.out.print("Format (NUMERIQUE / PHYSIQUE / HYBRIDE) : ");
+            String formatStr = sc.nextLine().trim().toUpperCase();
+            Ticket.FormatTicket format = Ticket.FormatTicket.valueOf(formatStr);
+
+            System.out.print("Lieu (ex: Tunis, Ariana...) : ");
+            String lieu = sc.nextLine().trim();
+
+            System.out.print("Latitude (optionnel, ex: 36.8) : ");
+            String latStr = sc.nextLine().trim();
+            Double latitude = latStr.isEmpty() ? null : Double.parseDouble(latStr);
+
+            System.out.print("Longitude (optionnel, ex: 10.2) : ");
+            String lonStr = sc.nextLine().trim();
+            Double longitude = lonStr.isEmpty() ? null : Double.parseDouble(lonStr);
+
+            Ticket ticket = ticketService.creerTicketSelonChoix(
+                    participationId, userId, type, latitude, longitude, lieu, format
+            );
+
+            System.out.println("\n🎉 Ticket créé avec succès !");
+            System.out.println(ticket);
+
+        } catch (NumberFormatException e) {
+            System.out.println("❌ Erreur : veuillez entrer des nombres valides pour les IDs, latitude et longitude.");
+        } catch (IllegalArgumentException e) {
+            System.out.println("❌ Erreur de saisie : " + e.getMessage());
+            System.out.println("   → Vérifiez type (TICKET/BADGE/PASS) et format (NUMERIQUE/PHYSIQUE/HYBRIDE)");
+        } catch (Exception e) {
+            System.out.println("❌ Erreur inattendue : " + e.getMessage());
+        }
+    }
+
+    private static void afficherTicketParId() {
+        System.out.print("Entrez l'ID du ticket : ");
+        try {
+            Long id = Long.parseLong(sc.nextLine().trim());
+            Ticket t = ticketService.getById(id);
+            if (t == null) {
+                System.out.println("❌ Aucun ticket trouvé avec l'ID " + id);
+            } else {
+                System.out.println("\nTicket trouvé :");
+                System.out.println(t);
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("❌ ID invalide. Entrez un nombre.");
+        }
+    }
+
+    private static void afficherTousTickets() {
+        List<Ticket> tickets = ticketService.getAll();
+        afficherListeTickets(tickets, "tous les tickets");
+    }
+
+    private static void afficherTousTicketsAvecTri() {
+        System.out.print("Trier par (date_creation / statut / type / format / date_expiration) [défaut: date_creation] : ");
+        String sortBy = sc.nextLine().trim();
+        if (sortBy.isEmpty()) sortBy = "date_creation";
+
+        System.out.print("Ordre (ASC / DESC) [défaut: DESC] : ");
+        String sortOrder = sc.nextLine().trim().toUpperCase();
+        if (sortOrder.isEmpty()) sortOrder = "DESC";
+
+        List<Ticket> tickets = ticketService.getAll(sortBy, sortOrder);
+        afficherListeTickets(tickets, "tous les tickets triés par " + sortBy + " (" + sortOrder + ")");
+    }
+
+    private static void modifierTicketInteractif() {
+        System.out.print("ID du ticket à modifier : ");
+        try {
+            Long id = Long.parseLong(sc.nextLine().trim());
+            Ticket ticket = ticketService.getById(id);
+
+            if (ticket == null) {
+                System.out.println("❌ Ticket " + id + " introuvable.");
+                return;
+            }
+
+            System.out.println("\nTicket actuel :");
+            System.out.println(ticket);
+
+            System.out.print("Nouveau lieu (vide = garder) : ");
+            String lieu = sc.nextLine().trim();
+            if (!lieu.isEmpty()) ticket.setLieu(lieu);
+
+            System.out.print("Nouveau statut (VALIDE/UTILISE/EXPIRE/ANNULE - vide = garder) : ");
+            String statutStr = sc.nextLine().trim().toUpperCase();
+            if (!statutStr.isEmpty()) {
+                ticket.setStatut(Ticket.StatutTicket.valueOf(statutStr));
+            }
+
+            Ticket updated = ticketService.update(ticket);
+            System.out.println("\nTicket mis à jour :");
+            System.out.println(updated);
+
+        } catch (NumberFormatException e) {
+            System.out.println("❌ ID invalide.");
+        } catch (IllegalArgumentException e) {
+            System.out.println("❌ Statut invalide : " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("❌ Erreur : " + e.getMessage());
+        }
+    }
+
+    private static void supprimerTicketInteractif() {
+        System.out.print("ID du ticket à supprimer : ");
+        try {
+            Long id = Long.parseLong(sc.nextLine().trim());
+            if (ticketService.delete(id)) {
+                System.out.println("✅ Ticket " + id + " supprimé avec succès !");
+            } else {
+                System.out.println("❌ Impossible de supprimer (ticket introuvable ou déjà utilisé)");
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("❌ ID invalide.");
+        }
+    }
+
+    private static void listerParParticipation() {
+        System.out.print("ID participation : ");
+        try {
+            Long id = Long.parseLong(sc.nextLine().trim());
+            List<Ticket> tickets = ticketService.findByParticipationId(id);
+            afficherListeTickets(tickets, "participation " + id);
+        } catch (NumberFormatException e) {
+            System.out.println("❌ ID invalide.");
+        }
+    }
+
+    private static void listerParUtilisateur() {
+        System.out.print("ID utilisateur : ");
+        try {
+            Long id = Long.parseLong(sc.nextLine().trim());
+            List<Ticket> tickets = ticketService.findByUserId(id);
+            afficherListeTickets(tickets, "utilisateur " + id);
+        } catch (NumberFormatException e) {
+            System.out.println("❌ ID invalide.");
+        }
+    }
+
+    private static void listerParType() {
+        System.out.print("Type (TICKET / BADGE / PASS) : ");
+        try {
+            String typeStr = sc.nextLine().trim().toUpperCase();
+            Ticket.TypeTicket type = Ticket.TypeTicket.valueOf(typeStr);
+            List<Ticket> tickets = ticketService.findByType(type);
+            afficherListeTickets(tickets, "type " + type);
+        } catch (IllegalArgumentException e) {
+            System.out.println("❌ Type invalide. Valeurs possibles : TICKET, BADGE, PASS");
+        } catch (Exception e) {
+            System.out.println("❌ Erreur : " + e.getMessage());
+        }
+    }
+
+    private static void listerParStatut() {
+        System.out.print("Statut (VALIDE / UTILISE / EXPIRE / ANNULE) : ");
+        try {
+            String statutStr = sc.nextLine().trim().toUpperCase();
+            Ticket.StatutTicket statut = Ticket.StatutTicket.valueOf(statutStr);
+            List<Ticket> tickets = ticketService.findByStatut(statut);
+            afficherListeTickets(tickets, "statut " + statut);
+        } catch (IllegalArgumentException e) {
+            System.out.println("❌ Statut invalide. Valeurs possibles : VALIDE, UTILISE, EXPIRE, ANNULE");
+        }
+    }
+
+    private static void listerParFormat() {
+        System.out.print("Format (NUMERIQUE / PHYSIQUE / HYBRIDE) : ");
+        try {
+            String formatStr = sc.nextLine().trim().toUpperCase();
+            Ticket.FormatTicket format = Ticket.FormatTicket.valueOf(formatStr);
+            List<Ticket> tickets = ticketService.findByFormat(format);
+            afficherListeTickets(tickets, "format " + format);
+        } catch (IllegalArgumentException e) {
+            System.out.println("❌ Format invalide. Valeurs possibles : NUMERIQUE, PHYSIQUE, HYBRIDE");
+        }
+    }
+
+    private static void listerParCoordonnees() {
+        try {
+            System.out.print("Latitude : ");
+            Double latitude = Double.parseDouble(sc.nextLine().trim());
+
+            System.out.print("Longitude : ");
+            Double longitude = Double.parseDouble(sc.nextLine().trim());
+
+            System.out.print("Rayon en km : ");
+            Double rayon = Double.parseDouble(sc.nextLine().trim());
+
+            List<Ticket> tickets = ticketService.findByCoordonnees(latitude, longitude, rayon);
+            afficherListeTickets(tickets, "proximité " + rayon + "km autour de (" + latitude + ", " + longitude + ")");
+        } catch (NumberFormatException e) {
+            System.out.println("❌ Valeurs numériques invalides pour latitude, longitude ou rayon.");
+        }
+    }
+
+    private static void listerParLieu() {
+        System.out.print("Lieu (ex: Tunis, Ariana) : ");
+        String lieu = sc.nextLine().trim();
+        List<Ticket> tickets = ticketService.findByLieu(lieu);
+        afficherListeTickets(tickets, "lieu contenant '" + lieu + "'");
+    }
+
+    private static void marquerUtilise() {
+        System.out.print("ID ticket à marquer comme utilisé : ");
+        try {
+            Long id = Long.parseLong(sc.nextLine().trim());
+            Ticket t = ticketService.marquerCommeUtilise(id);
+            System.out.println("\nTicket marqué comme utilisé :");
+            System.out.println(t);
+        } catch (Exception e) {
+            System.out.println("❌ Erreur : " + e.getMessage());
+        }
+    }
+
+    private static void annulerTicket() {
+        System.out.print("ID ticket à annuler : ");
+        try {
+            Long id = Long.parseLong(sc.nextLine().trim());
+            Ticket t = ticketService.annulerTicket(id);
+            System.out.println("\nTicket annulé :");
+            System.out.println(t);
+        } catch (Exception e) {
+            System.out.println("❌ Erreur : " + e.getMessage());
+        }
+    }
+
+    private static void listerTicketsValides() {
+        List<Ticket> tickets = ticketService.findTicketsValides();
+        afficherListeTickets(tickets, "tickets valides");
+    }
+
+    private static void listerTicketsExpires() {
+        List<Ticket> tickets = ticketService.findTicketsExpires();
+        afficherListeTickets(tickets, "tickets expirés");
+    }
+
+    private static void validerTicketParCode() {
+        System.out.print("Code unique du ticket : ");
+        String code = sc.nextLine().trim();
+        boolean valide = ticketService.validerTicket(code);
+        System.out.println("\nTicket avec code " + code + " : " + (valide ? "VALIDE ✅" : "INVALIDE ou inexistant ❌"));
+    }
+
+    private static void afficherListeTickets(List<Ticket> tickets, String titre) {
+        if (tickets.isEmpty()) {
+            System.out.println("Aucun ticket trouvé pour : " + titre);
+        } else {
+            System.out.println("\n" + titre + " (" + tickets.size() + " ticket(s)) :");
+            tickets.forEach(System.out::println);
+        }
+    }
 
 
 
