@@ -455,7 +455,7 @@ public class AbonnementServiceImpl implements AbonnementService {
 
         // ID utilisateur
         if (abonnement.getUserId() == null || abonnement.getUserId() <= 0) {
-            errors.add("L'identifiant utilisateur est obligatoire et doit être positif. Exemple : 1 ou plus.");
+            errors.add("L'identifiant utilisateur est obligatoire et doit être positif et exite ( fait une participation). Exemple : 1 ou plus.");
         }
 
         // Type d'abonnement
